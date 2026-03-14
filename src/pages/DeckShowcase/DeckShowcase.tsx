@@ -32,6 +32,21 @@ interface ShowcaseExport {
 
 type CardRole = `commander-${number}` | `key-${number}`;
 
+const DEFAULT_SHOWCASE: ShowcaseExport = {
+  version: 1,
+  title: "Speedrun",
+  bracket: "Bracket 1 - Exhibition",
+  description: "Lose the game on the first turn.",
+  deckUrl: "",
+  manualColorIdentity: ["B"],
+  showColorIcons: true,
+  commanders: [{ name: "Phage the Untouchable", scryfallId: "d497a5a3-65fb-4c12-b3f2-8ce4cf4e0f6f" }],
+  keyCards: [
+    { name: "Black Lotus", scryfallId: "983c1308-d81b-444f-9806-a9723b987af1" },
+    { name: "Blacker Lotus", scryfallId: "4c85d097-e87b-41ee-93c6-0e54ec41b174" },
+  ],
+};
+
 function emptyCard(name: string): ShowcaseCard {
   return {
     quantity: 1,
@@ -58,37 +73,23 @@ function useDebounce<T>(value: T, delay: number): T {
 export function DeckShowcase() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const [title, setTitle] = useState("Speedrun");
-  const [bracket, setBracket] = useState("Bracket 1 - Exhibition");
-  const [description, setDescription] = useState(
-    "Lose the game on the first turn.",
-  );
+  const [title, setTitle] = useState("");
+  const [bracket, setBracket] = useState("");
+  const [description, setDescription] = useState("");
 
-  const [commanderNames, setCommanderNames] = useState<string[]>([
-    "Phage the Untouchable",
-  ]);
+  const [commanderNames, setCommanderNames] = useState<string[]>([""]);
   const [commanders, setCommanders] = useState<(ShowcaseCard | null)[]>([null]);
-  const [commanderImgs, setCommanderImgs] = useState<
-    (HTMLImageElement | null)[]
-  >([null]);
+  const [commanderImgs, setCommanderImgs] = useState<(HTMLImageElement | null)[]>([null]);
 
-  const [keyNames, setKeyNames] = useState<string[]>([
-    "Black Lotus",
-    "Blacker Lotus",
-  ]);
-  const [keys, setKeys] = useState<(ShowcaseCard | null)[]>([null, null]);
-  const [keyImgs, setKeyImgs] = useState<(HTMLImageElement | null)[]>([
-    null,
-    null,
-  ]);
+  const [keyNames, setKeyNames] = useState<string[]>([]);
+  const [keys, setKeys] = useState<(ShowcaseCard | null)[]>([]);
+  const [keyImgs, setKeyImgs] = useState<(HTMLImageElement | null)[]>([]);
 
   const [deckUrl, setDeckUrl] = useState("");
   const [qrImg, setQrImg] = useState<HTMLImageElement | null>(null);
   const debouncedDeckUrl = useDebounce(deckUrl, 600);
 
-  const [manualColorIdentity, setManualColorIdentity] = useState<
-    string[] | null
-  >(["B"]);
+  const [manualColorIdentity, setManualColorIdentity] = useState<string[] | null>(null);
   const [showColorIcons, setShowColorIcons] = useState(true);
 
   const [colorIconImgs, setColorIconImgs] = useState<
@@ -384,12 +385,7 @@ export function DeckShowcase() {
     URL.revokeObjectURL(url);
   };
 
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    const data: ShowcaseExport = JSON.parse(await file.text());
-
+  const loadShowcase = useCallback(async (data: ShowcaseExport) => {
     setTitle(data.title ?? "");
     setBracket(data.bracket ?? "");
     setDescription(data.description ?? "");
@@ -411,27 +407,18 @@ export function DeckShowcase() {
     prevCommanderNames.current = cmdEntries.map((c) => c.name);
     prevKeyNames.current = keyEntries.map((c) => c.name);
 
-    const buildCard = async (
-      entry: ShowcaseExport["commanders"][number],
-    ): Promise<ShowcaseCard | null> => {
+    const buildCard = async (entry: ShowcaseExport["commanders"][number]): Promise<ShowcaseCard | null> => {
       if (!entry.name.trim()) return null;
       const printings = await fetchAllPrintings(entry.name.trim());
-      if (printings.length === 0)
-        return { ...emptyCard(entry.name), error: true };
+      if (printings.length === 0) return { ...emptyCard(entry.name), error: true };
       const selectedIndex = entry.scryfallId
         ? Math.max(0, printings.findIndex((p) => p.id === entry.scryfallId))
         : 0;
       const { imageUrls, isDoubleFaced } = getPrintingImageUrls(printings[selectedIndex]);
       return {
-        quantity: 1,
-        name: entry.name,
-        allPrintings: printings,
-        selectedIndex,
-        imageUrls,
-        isDoubleFaced,
-        colorIdentity: printings[0].color_identity ?? [],
-        loading: false,
-        error: false,
+        quantity: 1, name: entry.name, allPrintings: printings, selectedIndex,
+        imageUrls, isDoubleFaced, colorIdentity: printings[0].color_identity ?? [],
+        loading: false, error: false,
       };
     };
 
@@ -448,6 +435,15 @@ export function DeckShowcase() {
       setCommanderImgs(cmdImgsLoaded);
       setKeyImgs(keyImgsLoaded);
     });
+  }, [loadImg]);
+
+  useEffect(() => { loadShowcase(DEFAULT_SHOWCASE); }, []);
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    loadShowcase(JSON.parse(await file.text()));
   };
 
   const handleDownload = () => {
@@ -456,7 +452,7 @@ export function DeckShowcase() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${title || "deck-showcase"}.png`;
+      a.download = `${(title || "deck-showcase").replace(/\s+/g, "_")}.png`;
       a.click();
       URL.revokeObjectURL(url);
     }, "image/png");
