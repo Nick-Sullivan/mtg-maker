@@ -5,7 +5,11 @@ import {
   ScryfallSearchResponse,
 } from "../../types";
 import { sleep } from "../sleep";
-import { DELAY_BETWEEN_REQUESTS, SCRYFALL_API_BASE } from "./constants";
+import { CORS_PROXY_URL, DELAY_BETWEEN_REQUESTS, SCRYFALL_API_BASE } from "./constants";
+
+export function proxyScryfallUrl(url: string): string {
+  return `${CORS_PROXY_URL}?url=${encodeURIComponent(url)}`;
+}
 
 interface Params {
   cards: Card[];

@@ -11,6 +11,7 @@ export default defineConfig({
         index: resolve(__dirname, "index.html"),
         proxy: resolve(__dirname, "proxy-maker.html"),
         compare: resolve(__dirname, "compare-decks.html"),
+        showcase: resolve(__dirname, "deck-showcase.html"),
       },
     },
   },

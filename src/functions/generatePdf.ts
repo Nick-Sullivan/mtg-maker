@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import { DeckWithMetadata } from "../types";
+import { CORS_PROXY_URL } from "./scryfall/constants";
 
 // Standard MTG card size in inches
 const CARD_WIDTH_INCHES = 2.5;
@@ -18,9 +19,6 @@ const CARDS_PER_ROW = 3;
 const CARDS_PER_COL = 3;
 const CARDS_PER_PAGE = CARDS_PER_ROW * CARDS_PER_COL;
 
-// AWS Lambda CORS proxy
-const CORS_PROXY_URL =
-  "https://c2hwmdldllsw5q7vvqtwq7avey0kimtt.lambda-url.ap-southeast-2.on.aws/";
 
 // Cache for base64 images
 const imageCache = new Map<string, string>();

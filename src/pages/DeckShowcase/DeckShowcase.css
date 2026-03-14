@@ -1,0 +1,368 @@
+.showcase-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  color: #e8e8e8;
+}
+
+.showcase-heading {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 24px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.showcase-layout {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 32px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .showcase-layout {
+    grid-template-columns: 1fr;
+  }
+  .showcase-preview {
+    order: -1;
+  }
+}
+
+.showcase-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  position: sticky;
+  top: 20px;
+}
+
+.showcase-canvas {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
+.showcase-download-btn {
+  background: #2e7d32;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 28px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.showcase-download-btn:hover {
+  background: #388e3c;
+}
+
+.showcase-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.showcase-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.showcase-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.showcase-field label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.showcase-field--grow {
+  flex: 1;
+}
+
+.showcase-field--bracket {
+  width: 220px;
+}
+
+.showcase-input {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 9px 12px;
+  color: #e8e8e8;
+  font-size: 0.95rem;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.showcase-input:focus {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+select.showcase-input {
+  color-scheme: dark;
+}
+
+select.showcase-input option {
+  background-color: #222;
+  color: #e8e8e8;
+}
+
+.showcase-textarea {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 9px 12px;
+  color: #e8e8e8;
+  font-size: 0.95rem;
+  width: 100%;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.showcase-textarea:focus {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.showcase-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.showcase-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.showcase-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ccc;
+  margin: 0;
+}
+
+.showcase-add-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #ccc;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.showcase-add-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.showcase-hint {
+  font-size: 0.82rem;
+  color: #666;
+  font-style: italic;
+  margin: 0;
+}
+
+.showcase-section--card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.showcase-section-name-input {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.showcase-section-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.showcase-remove-section-btn {
+  background: none;
+  border: 1px solid rgba(220, 80, 80, 0.3);
+  border-radius: 6px;
+  color: #e57373;
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.showcase-remove-section-btn:hover {
+  background: rgba(220, 80, 80, 0.15);
+}
+
+.showcase-add-section-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #aaa;
+  padding: 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.15s, color 0.15s;
+}
+
+.showcase-add-section-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* Color picker */
+.color-picker-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #aaa;
+  font-size: 0.82rem;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.color-picker-toggle input[type="checkbox"] {
+  accent-color: #fff;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.color-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+
+.color-picker-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  padding: 0;
+}
+
+.color-picker-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: scale(1.1);
+}
+
+.color-picker-btn.active {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: scale(1.1);
+}
+
+/* Card input row */
+.card-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-input-thumb-wrap {
+  flex-shrink: 0;
+  width: 36px;
+  height: 50px;
+}
+
+.card-input-thumb {
+  width: 36px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.card-input-thumb:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+.card-input-thumb-placeholder {
+  width: 36px;
+  height: 50px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.card-input-thumb-placeholder.error {
+  border-color: rgba(220, 50, 50, 0.4);
+  color: #e57373;
+}
+
+.card-input-name {
+  flex: 1;
+}
+
+.card-input-remove {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+
+.card-input-remove:hover {
+  color: #e57373;
+}
+
+/* Spinner */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}

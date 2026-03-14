@@ -31,6 +31,8 @@ export interface ScryfallCard {
   set: string;
   set_name: string;
   collector_number: string;
+  color_identity?: string[];
+  colors?: string[];
   image_uris?: {
     small: string;
     normal: string;

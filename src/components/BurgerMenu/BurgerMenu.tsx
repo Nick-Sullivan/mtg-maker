@@ -1,4 +1,4 @@
-import { GitCompare, Printer } from "lucide-react";
+import { GitCompare, Image, Printer } from "lucide-react";
 import { useState } from "react";
 import "./BurgerMenu.css";
 
@@ -12,6 +12,7 @@ export function BurgerMenu() {
     currentPath === "/mtg-maker-ts/" ||
     currentPath === "/mtg-maker-ts";
   const isCompareDecks = currentPath.includes("compare-decks");
+  const isDeckShowcase = currentPath.includes("deck-showcase");
 
   const toggleMenu = () => setIsOpen(!isOpen);
   const closeMenu = () => setIsOpen(false);
@@ -54,6 +55,15 @@ export function BurgerMenu() {
             >
               <GitCompare className="menu-icon" size={20} />
               Compare Decks
+            </a>
+          </li>
+          <li>
+            <a
+              href="/mtg-maker-ts/deck-showcase.html"
+              className={isDeckShowcase ? "active" : ""}
+            >
+              <Image className="menu-icon" size={20} />
+              Deck Showcase
             </a>
           </li>
         </ul>
