@@ -172,8 +172,8 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
       { dx:   0, dy:    0, w: 500, h: 700, rot: 0, z: 0 },
     ],
     1: [
-      { dx:  90, dy:  80, w: 390, h: 546, rot: 0, z: 1 },
-      { dx: -90, dy: -80, w: 390, h: 546, rot: 0, z: 0 },
+      { dx: 130, dy:  80, w: 390, h: 546, rot:  0.07, z: 1 },
+      { dx: -90, dy: -80, w: 390, h: 546, rot: -0.07, z: 0 },
     ],
     2: [
       { dx:    0, dy:  160, w: 300, h: 420, rot: 0, z: 2 },
