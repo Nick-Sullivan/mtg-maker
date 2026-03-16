@@ -47,19 +47,29 @@ resource "aws_s3_object" "static_files" {
   etag         = each.value.digests.md5
 }
 
+locals {
+  old_path_redirects = {
+    "index.html"         = "/mtg-maker/"
+    "proxy-maker.html"   = "/mtg-maker/proxy-maker.html"
+    "compare-decks.html" = "/mtg-maker/compare-decks.html"
+    "deck-showcase.html" = "/mtg-maker/deck-showcase.html"
+  }
+}
+
 resource "aws_s3_object" "redirect_old_path" {
+  for_each     = local.old_path_redirects
   bucket       = local.s3_bucket
-  key          = "mtg-maker-ts/index.html"
+  key          = "mtg-maker-ts/${each.key}"
   content_type = "text/html"
   content      = <<-HTML
     <!DOCTYPE html>
     <html>
       <head>
-        <meta http-equiv="refresh" content="0; url=/mtg-maker/" />
-        <link rel="canonical" href="/mtg-maker/" />
+        <meta http-equiv="refresh" content="0; url=${each.value}" />
+        <link rel="canonical" href="${each.value}" />
       </head>
       <body>
-        <p>Redirecting to <a href="/mtg-maker/">MTG Maker</a>...</p>
+        <p>Redirecting to <a href="${each.value}">${each.value}</a>...</p>
       </body>
     </html>
   HTML
