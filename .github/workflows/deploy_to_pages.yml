@@ -35,6 +35,8 @@ jobs:
 
       - name: Build
         run: mise run build
+        env:
+          BASE_PATH: /mtg-maker-ts/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
