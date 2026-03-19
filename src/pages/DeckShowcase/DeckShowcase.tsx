@@ -123,10 +123,6 @@ export function DeckShowcase() {
   const [suggestCard, setSuggestCard] = useState<ShowcaseCard | null>(null);
   const [suggestRole, setSuggestRole] = useState<CardRole | null>(null);
 
-  const debouncedTitle = useDebounce(title, 300);
-  const debouncedBracket = useDebounce(bracket, 300);
-  const debouncedDescription = useDebounce(description, 300);
-
   const debouncedCommanderNames = useDebounce(commanderNames, 600);
   const debouncedKeyNames = useDebounce(keyNames, 600);
 
@@ -243,6 +239,8 @@ export function DeckShowcase() {
       .catch(() => setQrImg(null));
   }, [debouncedDeckUrl]);
 
+  const drawTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     if (!canvasRef.current) return;
     const canvas = canvasRef.current;
@@ -276,9 +274,9 @@ export function DeckShowcase() {
     }
 
     const state: DrawState = {
-      title: debouncedTitle,
-      bracket: debouncedBracket,
-      description: debouncedDescription,
+      title,
+      bracket,
+      description,
       keyCardImgs: keyImgs,
       keyCardLoadingStates: keyNames.map((name, i) => name.trim() !== "" && !keyImgs[i]),
       commanderImg: commanderImgs[0] ?? null,
@@ -294,11 +292,19 @@ export function DeckShowcase() {
       showColorIcons,
       qrImg,
     };
-    document.fonts.ready.then(() => drawShowcase(canvas, state));
+
+    if (drawTimeoutRef.current) clearTimeout(drawTimeoutRef.current);
+    drawTimeoutRef.current = setTimeout(() => {
+      document.fonts.ready.then(() => requestAnimationFrame(() => drawShowcase(canvas, state)));
+    }, 300);
+
+    return () => {
+      if (drawTimeoutRef.current) clearTimeout(drawTimeoutRef.current);
+    };
   }, [
-    debouncedTitle,
-    debouncedBracket,
-    debouncedDescription,
+    title,
+    bracket,
+    description,
     keyImgs,
     keys,
     keyNames,

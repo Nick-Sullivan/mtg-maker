@@ -322,6 +322,10 @@ select.showcase-input option {
   padding: 0;
 }
 
+.color-picker-btn:focus {
+  outline: none;
+}
+
 .color-picker-btn:hover {
   background: rgba(255, 255, 255, 0.14);
   transform: scale(1.1);
