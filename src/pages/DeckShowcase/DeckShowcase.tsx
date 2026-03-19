@@ -26,7 +26,7 @@ interface ShowcaseExport {
   deckUrl: string;
   manualColorIdentity: string[] | null;
   showColorIcons: boolean;
-  commanders: { name: string; scryfallId?: string }[];
+  commanders: { name: string; scryfallId?: string; type?: string }[];
   keyCards: { name: string; scryfallId?: string }[];
 }
 
@@ -80,6 +80,7 @@ export function DeckShowcase() {
   const [commanderNames, setCommanderNames] = useState<string[]>([""]);
   const [commanders, setCommanders] = useState<(ShowcaseCard | null)[]>([null]);
   const [commanderImgs, setCommanderImgs] = useState<(HTMLImageElement | null)[]>([null]);
+  const [commanderTypes, setCommanderTypes] = useState<string[]>([""]);
 
   const [keyNames, setKeyNames] = useState<string[]>([]);
   const [keys, setKeys] = useState<(ShowcaseCard | null)[]>([]);
@@ -180,11 +181,11 @@ export function DeckShowcase() {
         changed[i] ? fetchCard(name) : null,
       ),
     ).then(async (results) => {
-      setCommanders((c) =>
-        c.map((card, i) => (results[i] !== null ? results[i] : card)),
-      );
       const newImgs = await Promise.all(
         results.map((r) => (r !== null ? loadImg(r) : Promise.resolve(null))),
+      );
+      setCommanders((c) =>
+        c.map((card, i) => (results[i] !== null ? results[i] : card)),
       );
       setCommanderImgs((imgs) =>
         imgs.map((img, i) => (results[i] !== null ? newImgs[i] : img)),
@@ -215,11 +216,11 @@ export function DeckShowcase() {
     Promise.all(
       debouncedKeyNames.map((name, i) => (changed[i] ? fetchCard(name) : null)),
     ).then(async (results) => {
-      setKeys((k) =>
-        k.map((card, i) => (results[i] !== null ? results[i] : card)),
-      );
       const newImgs = await Promise.all(
         results.map((r) => (r !== null ? loadImg(r) : Promise.resolve(null))),
+      );
+      setKeys((k) =>
+        k.map((card, i) => (results[i] !== null ? results[i] : card)),
       );
       setKeyImgs((imgs) =>
         imgs.map((img, i) => (results[i] !== null ? newImgs[i] : img)),
@@ -241,13 +242,49 @@ export function DeckShowcase() {
   useEffect(() => {
     if (!canvasRef.current) return;
     const canvas = canvasRef.current;
+    const altImgs: (HTMLImageElement | null)[] = [];
+    const altImgLoadingStates: boolean[] = [];
+    const backgroundImgs: (HTMLImageElement | null)[] = [null];
+    const backgroundImgLoadingStates: boolean[] = [false];
+    const partnerImgs: (HTMLImageElement | null)[] = [null];
+    const partnerImgLoadingStates: boolean[] = [false];
+    let lastNonBgSlot = 0;
+    const hasImg = (i: number) => !!commanderImgs[i];
+    const hasName = (i: number) => (commanderNames[i] ?? "").trim() !== "";
+    const needsPlaceholder = (i: number) => hasName(i) && !hasImg(i);
+
+    for (let i = 1; i < commanderTypes.length; i++) {
+      if (commanderTypes[i] === "background") {
+        backgroundImgs[lastNonBgSlot] = commanderImgs[i] ?? null;
+        backgroundImgLoadingStates[lastNonBgSlot] = needsPlaceholder(i);
+      } else if (commanderTypes[i] === "partner") {
+        partnerImgs[lastNonBgSlot] = commanderImgs[i] ?? null;
+        partnerImgLoadingStates[lastNonBgSlot] = needsPlaceholder(i);
+      } else {
+        altImgs.push(commanderImgs[i] ?? null);
+        altImgLoadingStates.push(needsPlaceholder(i));
+        lastNonBgSlot++;
+        backgroundImgs.push(null);
+        backgroundImgLoadingStates.push(false);
+        partnerImgs.push(null);
+        partnerImgLoadingStates.push(false);
+      }
+    }
+
     const state: DrawState = {
       title,
       bracket,
       description,
       keyCardImgs: keyImgs,
+      keyCardLoadingStates: keyNames.map((name, i) => name.trim() !== "" && !keyImgs[i]),
       commanderImg: commanderImgs[0] ?? null,
-      altImgs: commanderImgs.slice(1),
+      commanderImgLoading: needsPlaceholder(0),
+      altImgs,
+      altImgLoadingStates,
+      backgroundImgs,
+      backgroundImgLoadingStates,
+      partnerImgs,
+      partnerImgLoadingStates,
       colorIdentity: manualColorIdentity ?? commanders[0]?.colorIdentity ?? [],
       colorIcons: colorIconImgs,
       showColorIcons,
@@ -259,8 +296,12 @@ export function DeckShowcase() {
     bracket,
     description,
     keyImgs,
+    keys,
+    keyNames,
     commanderImgs,
     commanders,
+    commanderNames,
+    commanderTypes,
     colorIconImgs,
     showColorIcons,
     qrImg,
@@ -368,6 +409,7 @@ export function DeckShowcase() {
       commanders: commanders.map((c, i) => ({
         name: commanderNames[i],
         scryfallId: c?.allPrintings[c.selectedIndex]?.id,
+        type: commanderTypes[i] || undefined,
       })),
       keyCards: keys.map((c, i) => ({
         name: keyNames[i],
@@ -399,6 +441,7 @@ export function DeckShowcase() {
     setCommanderNames(cmdEntries.map((c) => c.name));
     setCommanders(cmdEntries.map(() => null));
     setCommanderImgs(cmdEntries.map(() => null));
+    setCommanderTypes(cmdEntries.map((c) => c.type ?? ""));
     setKeyNames(keyEntries.map((c) => c.name));
     setKeys(keyEntries.map(() => null));
     setKeyImgs(keyEntries.map(() => null));
@@ -459,15 +502,45 @@ export function DeckShowcase() {
   };
 
   const addCommander = () => {
-    if (commanderNames.length >= 4) return;
+    const primaryCount = commanderTypes.filter((t) => t === "").length;
+    if (primaryCount >= 4) return;
     setCommanderNames((n) => [...n, ""]);
     setCommanders((c) => [...c, null]);
     setCommanderImgs((i) => [...i, null]);
+    setCommanderTypes((t) => [...t, ""]);
   };
+
   const removeCommander = (idx: number) => {
     setCommanderNames((n) => n.filter((_, i) => i !== idx));
     setCommanders((c) => c.filter((_, i) => i !== idx));
     setCommanderImgs((i) => i.filter((_, j) => j !== idx));
+    setCommanderTypes((t) => t.filter((_, i) => i !== idx));
+  };
+
+  const removeCommanderGroup = (primaryIdx: number) => {
+    const toRemove = new Set<number>([primaryIdx]);
+    let j = primaryIdx + 1;
+    while (j < commanderTypes.length && commanderTypes[j] !== "") {
+      toRemove.add(j);
+      j++;
+    }
+    const keep = (_: unknown, i: number) => !toRemove.has(i);
+    setCommanderNames((n) => n.filter(keep));
+    setCommanders((c) => c.filter(keep));
+    setCommanderImgs((imgs) => imgs.filter(keep));
+    setCommanderTypes((t) => t.filter(keep));
+  };
+
+  const insertAssociated = (primaryIdx: number, type: string) => {
+    let insertAt = primaryIdx + 1;
+    while (insertAt < commanderTypes.length && commanderTypes[insertAt] !== "") insertAt++;
+    const ins = <T,>(arr: T[], val: T): T[] => [
+      ...arr.slice(0, insertAt), val, ...arr.slice(insertAt),
+    ];
+    setCommanderNames((n) => ins(n, ""));
+    setCommanders((c) => ins(c, null));
+    setCommanderImgs((imgs) => ins(imgs, null));
+    setCommanderTypes((t) => ins(t, type));
   };
 
   const addKey = () => {
@@ -532,41 +605,70 @@ export function DeckShowcase() {
             <div className="showcase-section-header">
               <h3 className="showcase-section-title">Commanders</h3>
             </div>
-            {commanderNames.map((name, i) => (
-              <CardInputRow
-                key={i}
-                name={name}
-                card={commanders[i] ?? null}
-                onNameChange={(v) =>
-                  setCommanderNames((n) => n.map((x, j) => (j === i ? v : x)))
-                }
-                onArtClick={() => {
-                  const c = commanders[i];
-                  if (c) {
-                    setModalCard(c);
-                    setModalRole(`commander-${i}`);
-                  }
-                }}
-                onErrorClick={() => {
-                  const c = commanders[i];
-                  if (c) {
-                    setSuggestCard(c);
-                    setSuggestRole(`commander-${i}`);
-                  }
-                }}
-                onRemove={
-                  commanderNames.length > 1
-                    ? () => removeCommander(i)
-                    : undefined
-                }
-                placeholder={i === 0 ? "Main commander" : "Alt commander"}
-              />
-            ))}
-            {commanderNames.length < 4 && (
-              <button
-                className="showcase-add-section-btn"
-                onClick={addCommander}
-              >
+            {(() => {
+              const groups: { primaryIdx: number; associated: number[] }[] = [];
+              let i = 0;
+              while (i < commanderNames.length) {
+                const primaryIdx = i++;
+                const associated: number[] = [];
+                while (i < commanderNames.length && commanderTypes[i] !== "") associated.push(i++);
+                groups.push({ primaryIdx, associated });
+              }
+              return groups.map(({ primaryIdx, associated }) => (
+                <div key={primaryIdx} className="commander-group">
+                  <CardInputRow
+                    name={commanderNames[primaryIdx]}
+                    card={commanders[primaryIdx] ?? null}
+                    onNameChange={(v) => setCommanderNames((n) => n.map((x, j) => (j === primaryIdx ? v : x)))}
+                    onArtClick={() => {
+                      const c = commanders[primaryIdx];
+                      if (c) { setModalCard(c); setModalRole(`commander-${primaryIdx}`); }
+                    }}
+                    onErrorClick={() => {
+                      const c = commanders[primaryIdx];
+                      if (c) { setSuggestCard(c); setSuggestRole(`commander-${primaryIdx}`); }
+                    }}
+                    onRemove={groups.length > 1 ? () => removeCommanderGroup(primaryIdx) : undefined}
+                    placeholder="Commander"
+                  />
+                  {associated.map((j) => (
+                    <div key={j} className="commander-sub-row">
+                      <button
+                        className="commander-sub-label"
+                        onClick={() => setCommanderTypes((t) => t.map((v, k) => k === j ? (v === "background" ? "partner" : "background") : v))}
+                        title="Click to toggle Background / Partner"
+                      >
+                        {commanderTypes[j] === "background" ? "Background" : "Partner"}
+                      </button>
+                      <CardInputRow
+                        name={commanderNames[j]}
+                        card={commanders[j] ?? null}
+                        onNameChange={(v) => setCommanderNames((n) => n.map((x, k) => (k === j ? v : x)))}
+                        onArtClick={() => {
+                          const c = commanders[j];
+                          if (c) { setModalCard(c); setModalRole(`commander-${j}`); }
+                        }}
+                        onErrorClick={() => {
+                          const c = commanders[j];
+                          if (c) { setSuggestCard(c); setSuggestRole(`commander-${j}`); }
+                        }}
+                        onRemove={() => removeCommander(j)}
+                        placeholder={commanderTypes[j] === "background" ? "Background card" : "Partner commander"}
+                      />
+                    </div>
+                  ))}
+                  {associated.length === 0 && (
+                    <div className="commander-sub-actions">
+                      <button className="commander-add-assoc-btn" onClick={() => insertAssociated(primaryIdx, "background")}>
+                        + Background / Partner
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ));
+            })()}
+            {commanderTypes.filter((t) => t === "").length < 4 && (
+              <button className="showcase-add-section-btn" onClick={addCommander}>
                 + Commander
               </button>
             )}

@@ -7,8 +7,15 @@ export interface DrawState {
   bracket: string;
   description: string;
   keyCardImgs: (HTMLImageElement | null)[];
+  keyCardLoadingStates: boolean[];
   commanderImg: HTMLImageElement | null;
+  commanderImgLoading: boolean;
   altImgs: (HTMLImageElement | null)[];
+  altImgLoadingStates: boolean[];
+  backgroundImgs: (HTMLImageElement | null)[];
+  backgroundImgLoadingStates: boolean[];
+  partnerImgs: (HTMLImageElement | null)[];
+  partnerImgLoadingStates: boolean[];
   colorIdentity: string[];
   colorIcons: Partial<Record<string, HTMLImageElement>>;
   showColorIcons: boolean;
@@ -83,6 +90,38 @@ function drawCard(
   ctx.lineWidth = 3;
   ctx.stroke();
 
+  ctx.restore();
+}
+
+function drawPlaceholderCard(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number,
+  rotation = 0,
+) {
+  const r = 14;
+  ctx.save();
+  ctx.translate(x + w / 2, y + h / 2);
+  ctx.rotate(rotation);
+
+  ctx.shadowBlur = 40;
+  ctx.shadowColor = "rgba(0,0,0,0.85)";
+  ctx.shadowOffsetX = 6;
+  ctx.shadowOffsetY = 14;
+
+  ctx.beginPath();
+  ctx.moveTo(-w / 2 + r, -h / 2);
+  ctx.lineTo(w / 2 - r, -h / 2);
+  ctx.arcTo(w / 2, -h / 2, w / 2, -h / 2 + r, r);
+  ctx.lineTo(w / 2, h / 2 - r);
+  ctx.arcTo(w / 2, h / 2, w / 2 - r, h / 2, r);
+  ctx.lineTo(-w / 2 + r, h / 2);
+  ctx.arcTo(-w / 2, h / 2, -w / 2, h / 2 - r, r);
+  ctx.lineTo(-w / 2, -h / 2 + r);
+  ctx.arcTo(-w / 2, -h / 2, -w / 2 + r, -h / 2, r);
+  ctx.closePath();
+
+  ctx.fillStyle = "rgba(90, 90, 90, 0.55)";
+  ctx.fill();
   ctx.restore();
 }
 
@@ -162,7 +201,9 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
 
   // Commander group — starts near the top of the canvas
   const cmdCX = S * 0.26;
-  const altCount = state.altImgs.filter(Boolean).length;
+  const altCount = state.altImgs.reduce(
+    (n, img, i) => n + (img || state.altImgLoadingStates[i] ? 1 : 0), 0,
+  );
   const headerRowY = 36;
 
   type CmdLayout = { dx: number; dy: number; w: number; h: number; rot: number; z: number };
@@ -176,9 +217,9 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
       { dx: -90, dy: -80, w: 390, h: 546, rot: -0.07, z: 0 },
     ],
     2: [
-      { dx:    0, dy:  160, w: 300, h: 420, rot: 0, z: 2 },
-      { dx: -130, dy: -130, w: 300, h: 420, rot: 0, z: 0 },
-      { dx:  130, dy: -130, w: 300, h: 420, rot: 0, z: 1 },
+      { dx:    0, dy:  160, w: 300, h: 420, rot:  0,    z: 2 },
+      { dx: -130, dy: -130, w: 300, h: 420, rot: -0.08, z: 0 },
+      { dx:  130, dy: -130, w: 300, h: 420, rot:  0.08, z: 1 },
     ],
     3: [
       { dx:  130, dy:  160, w: 300, h: 420, rot: 0, z: 3 },
@@ -189,18 +230,92 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
   };
 
   const config = layouts[altCount] ?? layouts[2];
-  // Align the topmost card edge with headerRowY
-  const cmdCY = headerRowY - Math.min(...config.map((c) => c.dy - c.h / 2));
-  const allImgs = [state.commanderImg, ...state.altImgs];
+  const PEEK_RATIO = 65 / 700;
 
-  // Draw in z order so higher z cards appear in front
+  // Card dimensions for a slot, accounting for partner (two sub-cards) and background scaling
+  const slotDims = (i: number) => {
+    const hasPartner = !!state.partnerImgs[i] || (state.partnerImgLoadingStates[i] ?? false);
+    const hasBg = !!state.backgroundImgs[i] || (state.backgroundImgLoadingStates[i] ?? false);
+    const baseW = hasPartner ? Math.round(config[i].w * 0.82) : config[i].w;
+    const baseH = hasPartner ? Math.round(baseW * 161 / 115) : config[i].h;
+    const peekH = hasBg ? Math.round(baseH * PEEK_RATIO) : 0;
+    const w = hasBg ? Math.round(baseW * (1 - PEEK_RATIO)) : baseW;
+    const h = hasBg ? Math.round(baseH * (1 - PEEK_RATIO)) : baseH;
+    return { w, h, peekH };
+  };
+
+  const slotEffectiveTop = (i: number) => {
+    const { h, peekH } = slotDims(i);
+    return config[i].dy - peekH - h / 2;
+  };
+
+  const cmdCY = headerRowY - Math.min(...config.map((_, i) => slotEffectiveTop(i)));
+  const allImgs = [state.commanderImg, ...state.altImgs];
+  const allImgLoadingStates = [state.commanderImgLoading, ...state.altImgLoadingStates];
+
+  // Draw in z order; background then commander(s) per slot
   const drawOrder = Array.from({ length: config.length }, (_, i) => i)
     .sort((a, b) => config[a].z - config[b].z);
   for (const i of drawOrder) {
-    const img = allImgs[i];
-    if (!img) continue;
-    const { dx, dy, w, h, rot } = config[i];
-    drawCard(ctx, img, cmdCX + dx - w / 2, cmdCY + dy - h / 2, w, h, rot);
+    const mainImg = allImgs[i] ?? null;
+    const mainLoading = allImgLoadingStates[i] ?? false;
+    const bgImg = state.backgroundImgs[i] ?? null;
+    const bgLoading = state.backgroundImgLoadingStates[i] ?? false;
+    const partnerImg = state.partnerImgs[i] ?? null;
+    const partnerLoading = state.partnerImgLoadingStates[i] ?? false;
+    const { w, h, peekH } = slotDims(i);
+    const { dx, dy, rot } = config[i];
+    const slotCX = cmdCX + dx;
+    const slotCY = cmdCY + dy;
+
+    if (partnerImg || partnerLoading) {
+      // Partner and main commander overlap with opposing skew within the slot
+      const SUB_ROT = 0.14;
+      const ox = w * 0.14;  // horizontal offset from slot centre
+      const oy = h * 0.04;  // vertical stagger
+      const shiftY = h * 0.12; // shift the whole pair down
+
+      if (bgImg) {
+        drawCard(ctx, bgImg,
+          slotCX + ox - w / 2 - w * 0.06,
+          slotCY + shiftY + oy - peekH - h / 2,
+          w, h, rot + SUB_ROT);
+      } else if (bgLoading) {
+        drawPlaceholderCard(ctx,
+          slotCX + ox - w / 2 - w * 0.06,
+          slotCY + shiftY + oy - peekH - h / 2,
+          w, h, rot + SUB_ROT);
+      }
+      // Partner behind (left, up, rotated counter-clockwise)
+      if (partnerImg) {
+        drawCard(ctx, partnerImg, slotCX - ox - w / 2, slotCY + shiftY - oy - h / 2, w, h, rot - SUB_ROT);
+      } else if (partnerLoading) {
+        drawPlaceholderCard(ctx, slotCX - ox - w / 2, slotCY + shiftY - oy - h / 2, w, h, rot - SUB_ROT);
+      }
+      // Main commander in front (right, down, rotated clockwise)
+      if (mainImg) {
+        drawCard(ctx, mainImg, slotCX + ox - w / 2, slotCY + oy - h / 2, w, h, rot + SUB_ROT);
+      } else if (mainLoading) {
+        drawPlaceholderCard(ctx, slotCX + ox - w / 2, slotCY + oy - h / 2, w, h, rot + SUB_ROT);
+      }
+    } else {
+      if (bgImg) {
+        drawCard(ctx, bgImg,
+          slotCX - w / 2 - w * 0.06,
+          slotCY - peekH - h / 2,
+          w, h, rot);
+      } else if (bgLoading) {
+        drawPlaceholderCard(ctx,
+          slotCX - w / 2 - w * 0.06,
+          slotCY - peekH - h / 2,
+          w, h, rot);
+      }
+      if (mainImg) {
+        drawCard(ctx, mainImg, slotCX - w / 2, slotCY - h / 2, w, h, rot);
+      } else if (mainLoading) {
+        drawPlaceholderCard(ctx, slotCX - w / 2, slotCY - h / 2, w, h, rot);
+      }
+    }
   }
 
   const rightX = S * 0.56;
@@ -313,12 +428,15 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
   }
 
   // Key Cards — bottom third, full width
-  const validKeys = state.keyCardImgs.filter(Boolean) as HTMLImageElement[];
-  if (validKeys.length > 0) {
+  const keySlots = state.keyCardImgs.map((img, i) => ({
+    img,
+    loading: state.keyCardLoadingStates[i] ?? false,
+  })).filter((s) => s.img || s.loading);
+  if (keySlots.length > 0) {
     const keyAreaH = S - 40 - keyCardsTop;
     const keyH = Math.min(keyAreaH * 0.88, 260);
     const keyW = keyH * (115 / 161);
-    const totalKeysW = validKeys.length * keyW + (validKeys.length - 1) * 20;
+    const totalKeysW = keySlots.length * keyW + (keySlots.length - 1) * 20;
     const startX = (S - totalKeysW) / 2;
     const cardY = keyCardsTop + (keyAreaH - keyH) / 2;
 
@@ -329,11 +447,16 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
     ctx.shadowBlur = 8;
     ctx.shadowColor = "rgba(0,0,0,0.7)";
     ctx.textAlign = "center";
-    ctx.fillText("Key Cards", S / 2, keyCardsTop - 10);
+    ctx.fillText("Key Cards", S / 2, keyCardsTop + 20);
     ctx.restore();
 
-    for (let i = 0; i < validKeys.length; i++) {
-      drawCard(ctx, validKeys[i], startX + i * (keyW + 20), cardY, keyW, keyH);
+    for (let i = 0; i < keySlots.length; i++) {
+      const { img, loading } = keySlots[i];
+      if (img) {
+        drawCard(ctx, img, startX + i * (keyW + 20), cardY, keyW, keyH);
+      } else if (loading) {
+        drawPlaceholderCard(ctx, startX + i * (keyW + 20), cardY, keyW, keyH);
+      }
     }
   }
 

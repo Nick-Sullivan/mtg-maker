@@ -1,16 +1,20 @@
 .showcase-page {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 0 20px 40px;
   color: #e8e8e8;
 }
 
 .showcase-heading {
-  font-size: 1.8rem;
+  font-size: 2.5rem;
   font-weight: 700;
-  color: #fff;
+  color: #7dff7d;
   margin-bottom: 24px;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  text-shadow:
+    0 0 10px rgba(125, 255, 125, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.8);
+  letter-spacing: 1px;
+  text-align: center;
 }
 
 .showcase-layout {
@@ -381,6 +385,67 @@ select.showcase-input option {
 
 .card-input-remove:hover {
   color: #e57373;
+}
+
+.commander-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.commander-sub-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 16px;
+}
+
+.commander-sub-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: none;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  padding: 2px 5px;
+  cursor: pointer;
+  text-align: center;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.commander-sub-label:hover {
+  color: #bbb;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.commander-sub-row .card-input-row {
+  flex: 1;
+}
+
+.commander-sub-actions {
+  display: flex;
+  gap: 6px;
+  padding-left: 16px;
+}
+
+.commander-add-assoc-btn {
+  background: none;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  color: #666;
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.commander-add-assoc-btn:hover {
+  color: #bbb;
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 /* Spinner */
