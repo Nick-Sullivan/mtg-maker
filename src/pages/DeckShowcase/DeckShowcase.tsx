@@ -40,10 +40,18 @@ const DEFAULT_SHOWCASE: ShowcaseExport = {
   deckUrl: "",
   manualColorIdentity: ["B"],
   showColorIcons: true,
-  commanders: [{ name: "Phage the Untouchable", scryfallId: "d497a5a3-65fb-4c12-b3f2-8ce4cf4e0f6f" }],
+  commanders: [
+    {
+      name: "Phage the Untouchable",
+      scryfallId: "d497a5a3-65fb-4c12-b3f2-8ce4cf4e0f6f",
+    },
+  ],
   keyCards: [
     { name: "Black Lotus", scryfallId: "983c1308-d81b-444f-9806-a9723b987af1" },
-    { name: "Blacker Lotus", scryfallId: "4c85d097-e87b-41ee-93c6-0e54ec41b174" },
+    {
+      name: "Blacker Lotus",
+      scryfallId: "4c85d097-e87b-41ee-93c6-0e54ec41b174",
+    },
   ],
 };
 
@@ -70,8 +78,11 @@ function useDebounce<T>(value: T, delay: number): T {
   return d;
 }
 
+const PREVIEW_SIZE = CANVAS_SIZE / 2;
+
 export function DeckShowcase() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const lastDrawStateRef = useRef<DrawState | null>(null);
 
   const [title, setTitle] = useState("");
   const [bracket, setBracket] = useState("");
@@ -79,7 +90,9 @@ export function DeckShowcase() {
 
   const [commanderNames, setCommanderNames] = useState<string[]>([""]);
   const [commanders, setCommanders] = useState<(ShowcaseCard | null)[]>([null]);
-  const [commanderImgs, setCommanderImgs] = useState<(HTMLImageElement | null)[]>([null]);
+  const [commanderImgs, setCommanderImgs] = useState<
+    (HTMLImageElement | null)[]
+  >([null]);
   const [commanderTypes, setCommanderTypes] = useState<string[]>([""]);
 
   const [keyNames, setKeyNames] = useState<string[]>([]);
@@ -90,7 +103,9 @@ export function DeckShowcase() {
   const [qrImg, setQrImg] = useState<HTMLImageElement | null>(null);
   const debouncedDeckUrl = useDebounce(deckUrl, 600);
 
-  const [manualColorIdentity, setManualColorIdentity] = useState<string[] | null>(null);
+  const [manualColorIdentity, setManualColorIdentity] = useState<
+    string[] | null
+  >(null);
   const [showColorIcons, setShowColorIcons] = useState(true);
 
   const [colorIconImgs, setColorIconImgs] = useState<
@@ -278,7 +293,9 @@ export function DeckShowcase() {
       bracket,
       description,
       keyCardImgs: keyImgs,
-      keyCardLoadingStates: keyNames.map((name, i) => name.trim() !== "" && !keyImgs[i]),
+      keyCardLoadingStates: keyNames.map(
+        (name, i) => name.trim() !== "" && !keyImgs[i],
+      ),
       commanderImg: commanderImgs[0] ?? null,
       commanderImgLoading: needsPlaceholder(0),
       altImgs,
@@ -293,9 +310,12 @@ export function DeckShowcase() {
       qrImg,
     };
 
+    lastDrawStateRef.current = state;
     if (drawTimeoutRef.current) clearTimeout(drawTimeoutRef.current);
     drawTimeoutRef.current = setTimeout(() => {
-      document.fonts.ready.then(() => requestAnimationFrame(() => drawShowcase(canvas, state)));
+      document.fonts.ready.then(() =>
+        requestAnimationFrame(() => drawShowcase(canvas, state)),
+      );
     }, 300);
 
     return () => {
@@ -437,60 +457,79 @@ export function DeckShowcase() {
     URL.revokeObjectURL(url);
   };
 
-  const loadShowcase = useCallback(async (data: ShowcaseExport) => {
-    setTitle(data.title ?? "");
-    setBracket(data.bracket ?? "");
-    setDescription(data.description ?? "");
-    setDeckUrl(data.deckUrl ?? "");
-    setManualColorIdentity(data.manualColorIdentity ?? null);
-    setShowColorIcons(data.showColorIcons ?? true);
+  const loadShowcase = useCallback(
+    async (data: ShowcaseExport) => {
+      setTitle(data.title ?? "");
+      setBracket(data.bracket ?? "");
+      setDescription(data.description ?? "");
+      setDeckUrl(data.deckUrl ?? "");
+      setManualColorIdentity(data.manualColorIdentity ?? null);
+      setShowColorIcons(data.showColorIcons ?? true);
 
-    const cmdEntries = data.commanders ?? [];
-    const keyEntries = data.keyCards ?? [];
+      const cmdEntries = data.commanders ?? [];
+      const keyEntries = data.keyCards ?? [];
 
-    setCommanderNames(cmdEntries.map((c) => c.name));
-    setCommanders(cmdEntries.map(() => null));
-    setCommanderImgs(cmdEntries.map(() => null));
-    setCommanderTypes(cmdEntries.map((c) => c.type ?? ""));
-    setKeyNames(keyEntries.map((c) => c.name));
-    setKeys(keyEntries.map(() => null));
-    setKeyImgs(keyEntries.map(() => null));
+      setCommanderNames(cmdEntries.map((c) => c.name));
+      setCommanders(cmdEntries.map(() => null));
+      setCommanderImgs(cmdEntries.map(() => null));
+      setCommanderTypes(cmdEntries.map((c) => c.type ?? ""));
+      setKeyNames(keyEntries.map((c) => c.name));
+      setKeys(keyEntries.map(() => null));
+      setKeyImgs(keyEntries.map(() => null));
 
-    // Prevent debounce effects from re-fetching what we're about to fetch
-    prevCommanderNames.current = cmdEntries.map((c) => c.name);
-    prevKeyNames.current = keyEntries.map((c) => c.name);
+      // Prevent debounce effects from re-fetching what we're about to fetch
+      prevCommanderNames.current = cmdEntries.map((c) => c.name);
+      prevKeyNames.current = keyEntries.map((c) => c.name);
 
-    const buildCard = async (entry: ShowcaseExport["commanders"][number]): Promise<ShowcaseCard | null> => {
-      if (!entry.name.trim()) return null;
-      const printings = await fetchAllPrintings(entry.name.trim());
-      if (printings.length === 0) return { ...emptyCard(entry.name), error: true };
-      const selectedIndex = entry.scryfallId
-        ? Math.max(0, printings.findIndex((p) => p.id === entry.scryfallId))
-        : 0;
-      const { imageUrls, isDoubleFaced } = getPrintingImageUrls(printings[selectedIndex]);
-      return {
-        quantity: 1, name: entry.name, allPrintings: printings, selectedIndex,
-        imageUrls, isDoubleFaced, colorIdentity: printings[0].color_identity ?? [],
-        loading: false, error: false,
+      const buildCard = async (
+        entry: ShowcaseExport["commanders"][number],
+      ): Promise<ShowcaseCard | null> => {
+        if (!entry.name.trim()) return null;
+        const printings = await fetchAllPrintings(entry.name.trim());
+        if (printings.length === 0)
+          return { ...emptyCard(entry.name), error: true };
+        const selectedIndex = entry.scryfallId
+          ? Math.max(
+              0,
+              printings.findIndex((p) => p.id === entry.scryfallId),
+            )
+          : 0;
+        const { imageUrls, isDoubleFaced } = getPrintingImageUrls(
+          printings[selectedIndex],
+        );
+        return {
+          quantity: 1,
+          name: entry.name,
+          allPrintings: printings,
+          selectedIndex,
+          imageUrls,
+          isDoubleFaced,
+          colorIdentity: printings[0].color_identity ?? [],
+          loading: false,
+          error: false,
+        };
       };
-    };
 
-    Promise.all([
-      Promise.all(cmdEntries.map(buildCard)),
-      Promise.all(keyEntries.map(buildCard)),
-    ]).then(async ([cmdCards, keyCards]) => {
-      setCommanders(cmdCards);
-      setKeys(keyCards);
-      const [cmdImgsLoaded, keyImgsLoaded] = await Promise.all([
-        Promise.all(cmdCards.map(loadImg)),
-        Promise.all(keyCards.map(loadImg)),
-      ]);
-      setCommanderImgs(cmdImgsLoaded);
-      setKeyImgs(keyImgsLoaded);
-    });
-  }, [loadImg]);
+      Promise.all([
+        Promise.all(cmdEntries.map(buildCard)),
+        Promise.all(keyEntries.map(buildCard)),
+      ]).then(async ([cmdCards, keyCards]) => {
+        setCommanders(cmdCards);
+        setKeys(keyCards);
+        const [cmdImgsLoaded, keyImgsLoaded] = await Promise.all([
+          Promise.all(cmdCards.map(loadImg)),
+          Promise.all(keyCards.map(loadImg)),
+        ]);
+        setCommanderImgs(cmdImgsLoaded);
+        setKeyImgs(keyImgsLoaded);
+      });
+    },
+    [loadImg],
+  );
 
-  useEffect(() => { loadShowcase(DEFAULT_SHOWCASE); }, []);
+  useEffect(() => {
+    loadShowcase(DEFAULT_SHOWCASE);
+  }, []);
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -500,15 +539,23 @@ export function DeckShowcase() {
   };
 
   const handleDownload = () => {
-    canvasRef.current?.toBlob((blob) => {
-      if (!blob) return;
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${(title || "deck-showcase").replace(/\s+/g, "_")}.png`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }, "image/png");
+    const state = lastDrawStateRef.current;
+    if (!state) return;
+    const full = document.createElement("canvas");
+    full.width = CANVAS_SIZE;
+    full.height = CANVAS_SIZE;
+    document.fonts.ready.then(() => {
+      drawShowcase(full, state);
+      full.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${(title || "deck-showcase").replace(/\s+/g, "_")}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }, "image/png");
+    });
   };
 
   const addCommander = () => {
@@ -543,9 +590,12 @@ export function DeckShowcase() {
 
   const insertAssociated = (primaryIdx: number, type: string) => {
     let insertAt = primaryIdx + 1;
-    while (insertAt < commanderTypes.length && commanderTypes[insertAt] !== "") insertAt++;
+    while (insertAt < commanderTypes.length && commanderTypes[insertAt] !== "")
+      insertAt++;
     const ins = <T,>(arr: T[], val: T): T[] => [
-      ...arr.slice(0, insertAt), val, ...arr.slice(insertAt),
+      ...arr.slice(0, insertAt),
+      val,
+      ...arr.slice(insertAt),
     ];
     setCommanderNames((n) => ins(n, ""));
     setCommanders((c) => ins(c, null));
@@ -572,8 +622,8 @@ export function DeckShowcase() {
         <div className="showcase-preview">
           <canvas
             ref={canvasRef}
-            width={CANVAS_SIZE}
-            height={CANVAS_SIZE}
+            width={PREVIEW_SIZE}
+            height={PREVIEW_SIZE}
             className="showcase-canvas"
           />
           <div className="showcase-preview-actions">
@@ -621,7 +671,8 @@ export function DeckShowcase() {
               while (i < commanderNames.length) {
                 const primaryIdx = i++;
                 const associated: number[] = [];
-                while (i < commanderNames.length && commanderTypes[i] !== "") associated.push(i++);
+                while (i < commanderNames.length && commanderTypes[i] !== "")
+                  associated.push(i++);
                 groups.push({ primaryIdx, associated });
               }
               return groups.map(({ primaryIdx, associated }) => (
@@ -629,47 +680,92 @@ export function DeckShowcase() {
                   <CardInputRow
                     name={commanderNames[primaryIdx]}
                     card={commanders[primaryIdx] ?? null}
-                    onNameChange={(v) => setCommanderNames((n) => n.map((x, j) => (j === primaryIdx ? v : x)))}
+                    onNameChange={(v) =>
+                      setCommanderNames((n) =>
+                        n.map((x, j) => (j === primaryIdx ? v : x)),
+                      )
+                    }
                     onArtClick={() => {
                       const c = commanders[primaryIdx];
-                      if (c) { setModalCard(c); setModalRole(`commander-${primaryIdx}`); }
+                      if (c) {
+                        setModalCard(c);
+                        setModalRole(`commander-${primaryIdx}`);
+                      }
                     }}
                     onErrorClick={() => {
                       const c = commanders[primaryIdx];
-                      if (c) { setSuggestCard(c); setSuggestRole(`commander-${primaryIdx}`); }
+                      if (c) {
+                        setSuggestCard(c);
+                        setSuggestRole(`commander-${primaryIdx}`);
+                      }
                     }}
-                    onRemove={groups.length > 1 ? () => removeCommanderGroup(primaryIdx) : undefined}
+                    onRemove={
+                      groups.length > 1
+                        ? () => removeCommanderGroup(primaryIdx)
+                        : undefined
+                    }
                     placeholder="Commander"
                   />
                   {associated.map((j) => (
                     <div key={j} className="commander-sub-row">
                       <button
                         className="commander-sub-label"
-                        onClick={() => setCommanderTypes((t) => t.map((v, k) => k === j ? (v === "background" ? "partner" : "background") : v))}
+                        onClick={() =>
+                          setCommanderTypes((t) =>
+                            t.map((v, k) =>
+                              k === j
+                                ? v === "background"
+                                  ? "partner"
+                                  : "background"
+                                : v,
+                            ),
+                          )
+                        }
                         title="Click to toggle Background / Partner"
                       >
-                        {commanderTypes[j] === "background" ? "Background" : "Partner"}
+                        {commanderTypes[j] === "background"
+                          ? "Background"
+                          : "Partner"}
                       </button>
                       <CardInputRow
                         name={commanderNames[j]}
                         card={commanders[j] ?? null}
-                        onNameChange={(v) => setCommanderNames((n) => n.map((x, k) => (k === j ? v : x)))}
+                        onNameChange={(v) =>
+                          setCommanderNames((n) =>
+                            n.map((x, k) => (k === j ? v : x)),
+                          )
+                        }
                         onArtClick={() => {
                           const c = commanders[j];
-                          if (c) { setModalCard(c); setModalRole(`commander-${j}`); }
+                          if (c) {
+                            setModalCard(c);
+                            setModalRole(`commander-${j}`);
+                          }
                         }}
                         onErrorClick={() => {
                           const c = commanders[j];
-                          if (c) { setSuggestCard(c); setSuggestRole(`commander-${j}`); }
+                          if (c) {
+                            setSuggestCard(c);
+                            setSuggestRole(`commander-${j}`);
+                          }
                         }}
                         onRemove={() => removeCommander(j)}
-                        placeholder={commanderTypes[j] === "background" ? "Background card" : "Partner commander"}
+                        placeholder={
+                          commanderTypes[j] === "background"
+                            ? "Background card"
+                            : "Partner commander"
+                        }
                       />
                     </div>
                   ))}
                   {associated.length === 0 && (
                     <div className="commander-sub-actions">
-                      <button className="commander-add-assoc-btn" onClick={() => insertAssociated(primaryIdx, "background")}>
+                      <button
+                        className="commander-add-assoc-btn"
+                        onClick={() =>
+                          insertAssociated(primaryIdx, "background")
+                        }
+                      >
                         + Background / Partner
                       </button>
                     </div>
@@ -678,7 +774,10 @@ export function DeckShowcase() {
               ));
             })()}
             {commanderTypes.filter((t) => t === "").length < 4 && (
-              <button className="showcase-add-section-btn" onClick={addCommander}>
+              <button
+                className="showcase-add-section-btn"
+                onClick={addCommander}
+              >
                 + Commander
               </button>
             )}

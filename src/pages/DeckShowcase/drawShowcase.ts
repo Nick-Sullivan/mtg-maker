@@ -130,8 +130,9 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
-  ctx.setTransform(2, 0, 0, 2, 0, 0);
   const S = CANVAS_SIZE / 2;
+  const scale = canvas.width / S;
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
   const palette = getPalette(state.colorIdentity);
 
   const sortedColors = [...state.colorIdentity].sort((a, b) => WUBRG.indexOf(a) - WUBRG.indexOf(b));
@@ -341,7 +342,6 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
   let titleBottomY = 36;
   if (state.title) {
     ctx.save();
-    ctx.font = `bold ${titleSize}px 'Cormorant Garamond', serif`;
     ctx.fillStyle = "#ffffff";
     ctx.textAlign = "center";
     ctx.shadowBlur = 18;
@@ -349,17 +349,25 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
     ctx.shadowOffsetY = 3;
     const titleCX = rightX + rightW / 2;
     const lines = state.title.split("\n").filter((l) => l.trim());
+    // Measure all lines at full size, then shrink uniformly so every line is the same size
+    ctx.font = `bold ${titleSize}px 'Cormorant Garamond', serif`;
+    const minScale = Math.min(...lines.map((line) => {
+      const w = ctx.measureText(line).width;
+      return w > rightW ? rightW / w : 1;
+    }));
+    const actualSize = Math.floor(titleSize * minScale);
+    ctx.font = `bold ${actualSize}px 'Cormorant Garamond', serif`;
     lines.forEach((line, i) => {
-      ctx.fillText(line, titleCX, 110 + i * (titleSize + 8), rightW);
+      ctx.fillText(line, titleCX, 110 + i * (actualSize + 8));
     });
-    titleBottomY = 110 + lines.length * (titleSize + 8);
+    titleBottomY = 110 + lines.length * (actualSize + 8);
     ctx.restore();
   }
 
   // Color icons + bracket badge — stacked below title
-  const rowY = titleBottomY - 30;
-  const iconSize = 48;
-  const iconGap = 8;
+  const rowY = titleBottomY - 25;
+  const iconSize = 42;
+  const iconGap = 7;
   const activeColors = WUBRG.filter((c) => state.colorIdentity.includes(c));
   const iconsVisible = state.showColorIcons && activeColors.length > 0;
   const titleCX = rightX + rightW / 2;
@@ -376,12 +384,12 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
   }
 
   // Row 2: bracket badge — below icons (or at rowY if no icons)
-  const bracketRowY = iconsVisible ? rowY + iconSize + 10 : rowY;
+  const bracketRowY = iconsVisible ? rowY + iconSize + 8 : rowY;
   let bracketH = 0;
   if (state.bracket) {
-    ctx.font = "bold 30px Philosopher, 'Segoe UI', Tahoma, serif";
-    const bw = ctx.measureText(state.bracket).width + 36;
-    bracketH = 48;
+    ctx.font = "bold 26px Philosopher, 'Segoe UI', Tahoma, serif";
+    const bw = ctx.measureText(state.bracket).width + 30;
+    bracketH = 42;
     const br = bracketH / 2;
     const bx = titleCX - bw / 2;
     const by = bracketRowY;
@@ -400,7 +408,7 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
     ctx.fill();
     ctx.shadowBlur = 0;
     ctx.fillStyle = "#ffffff";
-    ctx.fillText(state.bracket, bx + 18, by + 33);
+    ctx.fillText(state.bracket, bx + 15, by + 29);
     ctx.restore();
   }
 
@@ -413,18 +421,26 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
   const keyCardsTop = S * 0.67;
 
   if (state.description) {
-    const descSize = 38;
     ctx.save();
-    ctx.font = `${descSize}px 'Segoe UI', Tahoma, sans-serif`;
     ctx.fillStyle = "rgba(255,255,255,0.82)";
     ctx.shadowBlur = 8;
     ctx.shadowColor = "rgba(0,0,0,0.7)";
+    // Shrink font until all wrapped lines fit vertically
+    const maxDescSize = 38;
+    const minDescSize = 14;
+    let descSize = maxDescSize;
+    let wrappedLines: string[] = [];
+    while (descSize >= minDescSize) {
+      ctx.font = `${descSize}px 'Segoe UI', Tahoma, sans-serif`;
+      wrappedLines = state.description
+        .split("\n")
+        .flatMap((para) => para === "" ? [""] : wrapText(ctx, para, rightW));
+      const lastLineBottom = descAreaTop + 2 * descSize + (wrappedLines.length - 1) * (descSize + 10);
+      if (lastLineBottom <= keyCardsTop - 20) break;
+      descSize--;
+    }
     let y = descAreaTop + descSize;
-    const wrappedLines = state.description
-      .split("\n")
-      .flatMap((para) => para === "" ? [""] : wrapText(ctx, para, rightW));
     for (const line of wrappedLines) {
-      if (y + descSize > keyCardsTop - 20) break;
       ctx.fillText(line, rightX, y);
       y += descSize + 10;
     }
