@@ -2,11 +2,16 @@ import { getBasePalette, getPalette } from "./palette";
 
 export const CANVAS_SIZE = 2400;
 
-export function getCanvasDimensions(shape: 'square' | 'card', size = CANVAS_SIZE) {
-  return { width: size, height: shape === 'card' ? Math.round(size * 7 / 5) : size };
+export function getCanvasDimensions(
+  shape: "square" | "vertical" | "horizontal",
+  size = CANVAS_SIZE,
+) {
+  if (shape === "vertical") return { width: size, height: Math.round((size * 7) / 5) };
+  if (shape === "horizontal") return { width: Math.round((size * 7) / 5), height: size };
+  return { width: size, height: size };
 }
 
-const WUBRG = ['W', 'U', 'B', 'R', 'G'];
+const WUBRG = ["W", "U", "B", "R", "G"];
 
 export interface DrawState {
   title: string;
@@ -26,10 +31,14 @@ export interface DrawState {
   colorIcons: Partial<Record<string, HTMLImageElement>>;
   showColorIcons: boolean;
   qrImg: HTMLImageElement | null;
-  shape: 'square' | 'card';
+  shape: "square" | "vertical" | "horizontal";
 }
 
-function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+function wrapText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+): string[] {
   const lines: string[] = [];
   let line = "";
   for (const word of text.split(" ")) {
@@ -48,7 +57,10 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
 function drawCard(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
-  x: number, y: number, w: number, h: number,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
   rotation = 0,
 ) {
   const r = 14;
@@ -88,9 +100,9 @@ function drawCard(
   ctx.rotate(rotation);
   roundedRectPath();
   const rim = ctx.createLinearGradient(-w / 2, -h / 2, w / 2, h / 2);
-  rim.addColorStop(0,   "rgba(255,255,255,0.35)");
+  rim.addColorStop(0, "rgba(255,255,255,0.35)");
   rim.addColorStop(0.4, "rgba(255,255,255,0.08)");
-  rim.addColorStop(1,   "rgba(0,0,0,0.3)");
+  rim.addColorStop(1, "rgba(0,0,0,0.3)");
   ctx.strokeStyle = rim;
   ctx.lineWidth = 3;
   ctx.stroke();
@@ -100,7 +112,10 @@ function drawCard(
 
 function drawPlaceholderCard(
   ctx: CanvasRenderingContext2D,
-  x: number, y: number, w: number, h: number,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
   rotation = 0,
 ) {
   const r = 14;
@@ -137,24 +152,47 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
   const S = CANVAS_SIZE / 2;
   const scale = canvas.width / S;
   const W = S;
-  const H = Math.round(canvas.height * S / canvas.width);
+  const H = Math.round((canvas.height * S) / canvas.width);
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
   const palette = getPalette(state.colorIdentity);
 
-  const sortedColors = [...state.colorIdentity].sort((a, b) => WUBRG.indexOf(a) - WUBRG.indexOf(b));
-  const subPalettes = sortedColors.length >= 2
-    ? sortedColors.map(getBasePalette).filter(Boolean) as NonNullable<ReturnType<typeof getBasePalette>>[]
-    : null;
+  const sortedColors = [...state.colorIdentity].sort(
+    (a, b) => WUBRG.indexOf(a) - WUBRG.indexOf(b),
+  );
+  const subPalettes =
+    sortedColors.length >= 2
+      ? (sortedColors.map(getBasePalette).filter(Boolean) as NonNullable<
+          ReturnType<typeof getBasePalette>
+        >[])
+      : null;
 
   // ─── Background ───
   if (subPalettes && subPalettes.length >= 2) {
     const ANCHORS: [number, number][][] = [
       [],
       [],
-      [[0, 0], [1, 1]],
-      [[0, 0], [1, 0], [0.5, 1]],
-      [[0, 0], [1, 0], [0, 1], [1, 1]],
-      [[0, 0], [1, 0], [0.5, 0.5], [0, 1], [1, 1]],
+      [
+        [0, 0],
+        [1, 1],
+      ],
+      [
+        [0, 0],
+        [1, 0],
+        [0.5, 1],
+      ],
+      [
+        [0, 0],
+        [1, 0],
+        [0, 1],
+        [1, 1],
+      ],
+      [
+        [0, 0],
+        [1, 0],
+        [0.5, 0.5],
+        [0, 1],
+        [1, 1],
+      ],
     ];
     const anchors = ANCHORS[subPalettes.length];
 
@@ -171,7 +209,14 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
       const [fx, fy] = anchors[i];
       const cx = W * fx;
       const cy = H * fy;
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.9);
+      const g = ctx.createRadialGradient(
+        cx,
+        cy,
+        0,
+        cx,
+        cy,
+        Math.max(W, H) * 0.9,
+      );
       g.addColorStop(0, p.mid);
       g.addColorStop(0.45, p.dark);
       g.addColorStop(1, "transparent");
@@ -185,7 +230,14 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
       const [fx, fy] = anchors[i];
       const gx = fx === 0 ? glowInset : fx === 1 ? 1 - glowInset : fx;
       const gy = fy === 0 ? glowInset : fy === 1 ? 1 - glowInset : fy;
-      const gg = ctx.createRadialGradient(W * gx, H * gy, 0, W * gx, H * gy, Math.max(W, H) * 0.5);
+      const gg = ctx.createRadialGradient(
+        W * gx,
+        H * gy,
+        0,
+        W * gx,
+        H * gy,
+        Math.max(W, H) * 0.5,
+      );
       gg.addColorStop(0, p.glow + "30");
       gg.addColorStop(1, "transparent");
       ctx.fillStyle = gg;
@@ -198,13 +250,27 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
-    const glow1 = ctx.createRadialGradient(W * 0.31, H * 0.62, 0, W * 0.31, H * 0.62, H * 0.35);
+    const glow1 = ctx.createRadialGradient(
+      W * 0.31,
+      H * 0.62,
+      0,
+      W * 0.31,
+      H * 0.62,
+      H * 0.35,
+    );
     glow1.addColorStop(0, palette.glow + "28");
     glow1.addColorStop(1, "transparent");
     ctx.fillStyle = glow1;
     ctx.fillRect(0, 0, W, H);
 
-    const glow2 = ctx.createRadialGradient(W * 0.82, H * 0.72, 0, W * 0.82, H * 0.72, H * 0.25);
+    const glow2 = ctx.createRadialGradient(
+      W * 0.82,
+      H * 0.72,
+      0,
+      W * 0.82,
+      H * 0.72,
+      H * 0.25,
+    );
     glow2.addColorStop(0, palette.glow + "18");
     glow2.addColorStop(1, "transparent");
     ctx.fillStyle = glow2;
@@ -220,40 +286,52 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
 
   // ─── Shared commander data ───
   const altCount = state.altImgs.reduce(
-    (n, img, i) => n + (img || state.altImgLoadingStates[i] ? 1 : 0), 0,
+    (n, img, i) => n + (img || state.altImgLoadingStates[i] ? 1 : 0),
+    0,
   );
   const allImgs = [state.commanderImg, ...state.altImgs];
-  const allImgLoadingStates = [state.commanderImgLoading, ...state.altImgLoadingStates];
+  const allImgLoadingStates = [
+    state.commanderImgLoading,
+    ...state.altImgLoadingStates,
+  ];
 
-  if (state.shape === 'card') {
+  if (state.shape === "vertical") {
     // ═══════════════════════════════════════
-    // Card mode layout
+    // Vertical (card) mode layout
     // ═══════════════════════════════════════
 
     // Title — full width, centred
     const cardTitleSize = 96;
     const titleBaselineY = 140;
     let cardTitleBottomY = titleBaselineY;
-    const titleLines = state.title ? state.title.split("\n").filter(l => l.trim()) : [];
+    const titleLines = state.title
+      ? state.title.split("\n").filter((l) => l.trim())
+      : [];
     let actualTitleSize = cardTitleSize;
     let titleVisualTop = titleBaselineY - cardTitleSize;
     if (titleLines.length > 0) {
       ctx.font = `bold ${cardTitleSize}px 'Cormorant Garamond', serif`;
-      const minScale = Math.min(...titleLines.map(l => {
-        const lw = ctx.measureText(l).width;
-        return lw > W * 0.9 ? (W * 0.9) / lw : 1;
-      }));
+      const minScale = Math.min(
+        ...titleLines.map((l) => {
+          const lw = ctx.measureText(l).width;
+          return lw > W * 0.9 ? (W * 0.9) / lw : 1;
+        }),
+      );
       actualTitleSize = Math.floor(cardTitleSize * minScale);
       ctx.font = `bold ${actualTitleSize}px 'Cormorant Garamond', serif`;
-      titleVisualTop = titleBaselineY - ctx.measureText(titleLines[0]).actualBoundingBoxAscent;
+      titleVisualTop =
+        titleBaselineY - ctx.measureText(titleLines[0]).actualBoundingBoxAscent;
       ctx.save();
       ctx.fillStyle = "#ffffff";
       ctx.textAlign = "center";
       ctx.shadowBlur = 18;
       ctx.shadowColor = "rgba(0,0,0,0.8)";
       ctx.shadowOffsetY = 3;
-      titleLines.forEach((l, i) => ctx.fillText(l, W / 2, titleBaselineY + i * (actualTitleSize + 8)));
-      cardTitleBottomY = titleBaselineY + titleLines.length * (actualTitleSize + 8);
+      titleLines.forEach((l, i) =>
+        ctx.fillText(l, W / 2, titleBaselineY + i * (actualTitleSize + 8)),
+      );
+      cardTitleBottomY =
+        titleBaselineY + titleLines.length * (actualTitleSize + 8);
       ctx.restore();
     }
 
@@ -261,13 +339,18 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
     const metaIconSize = 48;
     const metaIconGap = 7;
     const metaRightEdge = W - 24;
-    const cardActiveColors = WUBRG.filter(c => state.colorIdentity.includes(c));
+    const cardActiveColors = WUBRG.filter((c) =>
+      state.colorIdentity.includes(c),
+    );
     const iconsVisible = state.showColorIcons && cardActiveColors.length > 0;
     const totalIconW = iconsVisible
-      ? cardActiveColors.length * metaIconSize + (cardActiveColors.length - 1) * metaIconGap
+      ? cardActiveColors.length * metaIconSize +
+        (cardActiveColors.length - 1) * metaIconGap
       : 0;
     ctx.font = "bold 28px Philosopher, 'Segoe UI', Tahoma, serif";
-    const bracketTextW = state.bracket ? ctx.measureText(state.bracket).width + 32 : 0;
+    const bracketTextW = state.bracket
+      ? ctx.measureText(state.bracket).width + 32
+      : 0;
     const blockW = Math.max(totalIconW, bracketTextW);
     const metaBlockLeft = metaRightEdge - blockW;
 
@@ -315,7 +398,7 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
     // Description — below header, above commanders
     const cardHeaderH = Math.max(cardTitleBottomY + 2, metaY + 2, 200);
     const descMaxW = W * 0.82;
-    const maxDescH = H * 0.18;
+    const maxDescH = H * 0.28;
     const maxDescSize = 54;
     const minDescSize = 14;
     let descSize = maxDescSize;
@@ -325,14 +408,17 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
         ctx.font = `${descSize}px 'Segoe UI', Tahoma, sans-serif`;
         wrappedDescLines = state.description
           .split("\n")
-          .flatMap(para => para === "" ? [""] : wrapText(ctx, para, descMaxW));
+          .flatMap((para) =>
+            para === "" ? [""] : wrapText(ctx, para, descMaxW),
+          );
         if (wrappedDescLines.length * (descSize + 10) <= maxDescH) break;
         descSize--;
       }
     }
-    const descBlockH = wrappedDescLines.length > 0
-      ? wrappedDescLines.length * (descSize + 10) - 10
-      : 0;
+    const descBlockH =
+      wrappedDescLines.length > 0
+        ? wrappedDescLines.length * (descSize + 10) - 10
+        : 0;
     const descTop = cardHeaderH + 12;
 
     if (wrappedDescLines.length > 0) {
@@ -356,7 +442,14 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
     const cmdAreaH = cmdAreaBot - cmdAreaTop;
     const cmdAspect = 161 / 115;
 
-    const cardLayouts: { dx: number; dy: number; w: number; h: number; rot: number; z: number }[] = (() => {
+    const cardLayouts: {
+      dx: number;
+      dy: number;
+      w: number;
+      h: number;
+      rot: number;
+      z: number;
+    }[] = (() => {
       const maxH = cmdAreaH * 0.75;
       const maxW = W * 0.72;
       const baseW = Math.round(Math.min(maxW, maxH / cmdAspect));
@@ -369,7 +462,7 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
         const lg = Math.round(baseW * 1.0);
         const lgH = Math.round(lg * cmdAspect);
         return [
-          { dx:  220, dy: -30, w: lg, h: lgH, rot:  0.04, z: 1 },
+          { dx: 220, dy: -30, w: lg, h: lgH, rot: 0.04, z: 1 },
           { dx: -220, dy: -30, w: lg, h: lgH, rot: -0.04, z: 0 },
         ];
       }
@@ -377,22 +470,24 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
         const md = Math.round(baseW * 0.86);
         const mdH = Math.round(md * cmdAspect);
         return [
-          { dx:    0, dy:  80, w: md, h: mdH, rot:  0,    z: 2 },
+          { dx: 0, dy: 80, w: md, h: mdH, rot: 0, z: 2 },
           { dx: -220, dy: -60, w: md, h: mdH, rot: -0.08, z: 0 },
-          { dx:  220, dy: -60, w: md, h: mdH, rot:  0.08, z: 1 },
+          { dx: 220, dy: -60, w: md, h: mdH, rot: 0.08, z: 1 },
         ];
       }
       return [
-        { dx:  120, dy:  80, w: sm, h: smH, rot: 0, z: 3 },
+        { dx: 120, dy: 80, w: sm, h: smH, rot: 0, z: 3 },
         { dx: -120, dy: -80, w: sm, h: smH, rot: 0, z: 0 },
-        { dx:  120, dy: -80, w: sm, h: smH, rot: 0, z: 1 },
-        { dx: -120, dy:  80, w: sm, h: smH, rot: 0, z: 2 },
+        { dx: 120, dy: -80, w: sm, h: smH, rot: 0, z: 1 },
+        { dx: -120, dy: 80, w: sm, h: smH, rot: 0, z: 2 },
       ];
     })();
 
     const cmdCenterX = W / 2;
     const cmdCenterY = cmdAreaTop + cmdAreaH * 0.5;
-    const cardDrawOrder = cardLayouts.map((_, i) => i).sort((a, b) => cardLayouts[a].z - cardLayouts[b].z);
+    const cardDrawOrder = cardLayouts
+      .map((_, i) => i)
+      .sort((a, b) => cardLayouts[a].z - cardLayouts[b].z);
 
     const CARD_PEEK_RATIO = 65 / 700;
     for (const i of cardDrawOrder) {
@@ -420,25 +515,85 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
         const oy = h * 0.04;
         const shiftY = h * 0.12;
         if (bgImg) {
-          drawCard(ctx, bgImg, slotCX + ox - w / 2 - w * 0.06, slotCY + shiftY + oy - peekH - h / 2, w, h, rot + SUB_ROT);
+          drawCard(
+            ctx,
+            bgImg,
+            slotCX + ox - w / 2 - w * 0.06,
+            slotCY + shiftY + oy - peekH - h / 2,
+            w,
+            h,
+            rot + SUB_ROT,
+          );
         } else if (bgLoading) {
-          drawPlaceholderCard(ctx, slotCX + ox - w / 2 - w * 0.06, slotCY + shiftY + oy - peekH - h / 2, w, h, rot + SUB_ROT);
+          drawPlaceholderCard(
+            ctx,
+            slotCX + ox - w / 2 - w * 0.06,
+            slotCY + shiftY + oy - peekH - h / 2,
+            w,
+            h,
+            rot + SUB_ROT,
+          );
         }
         if (partnerImg) {
-          drawCard(ctx, partnerImg, slotCX - ox - w / 2, slotCY + shiftY - oy - h / 2, w, h, rot - SUB_ROT);
+          drawCard(
+            ctx,
+            partnerImg,
+            slotCX - ox - w / 2,
+            slotCY + shiftY - oy - h / 2,
+            w,
+            h,
+            rot - SUB_ROT,
+          );
         } else if (partnerLoading) {
-          drawPlaceholderCard(ctx, slotCX - ox - w / 2, slotCY + shiftY - oy - h / 2, w, h, rot - SUB_ROT);
+          drawPlaceholderCard(
+            ctx,
+            slotCX - ox - w / 2,
+            slotCY + shiftY - oy - h / 2,
+            w,
+            h,
+            rot - SUB_ROT,
+          );
         }
         if (mainImg) {
-          drawCard(ctx, mainImg, slotCX + ox - w / 2, slotCY + oy - h / 2, w, h, rot + SUB_ROT);
+          drawCard(
+            ctx,
+            mainImg,
+            slotCX + ox - w / 2,
+            slotCY + oy - h / 2,
+            w,
+            h,
+            rot + SUB_ROT,
+          );
         } else if (mainLoading) {
-          drawPlaceholderCard(ctx, slotCX + ox - w / 2, slotCY + oy - h / 2, w, h, rot + SUB_ROT);
+          drawPlaceholderCard(
+            ctx,
+            slotCX + ox - w / 2,
+            slotCY + oy - h / 2,
+            w,
+            h,
+            rot + SUB_ROT,
+          );
         }
       } else {
         if (bgImg) {
-          drawCard(ctx, bgImg, slotCX - w / 2 - w * 0.06, slotCY - peekH - h / 2, w, h, rot);
+          drawCard(
+            ctx,
+            bgImg,
+            slotCX - w / 2 - w * 0.06,
+            slotCY - peekH - h / 2,
+            w,
+            h,
+            rot,
+          );
         } else if (bgLoading) {
-          drawPlaceholderCard(ctx, slotCX - w / 2 - w * 0.06, slotCY - peekH - h / 2, w, h, rot);
+          drawPlaceholderCard(
+            ctx,
+            slotCX - w / 2 - w * 0.06,
+            slotCY - peekH - h / 2,
+            w,
+            h,
+            rot,
+          );
         }
         if (mainImg) {
           drawCard(ctx, mainImg, slotCX - w / 2, slotCY - h / 2, w, h, rot);
@@ -447,7 +602,6 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
         }
       }
     }
-
   } else {
     // ═══════════════════════════════════════
     // Square mode layout
@@ -456,26 +610,31 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
     const cmdCX = S * 0.26;
     const headerRowY = 36;
 
-    type CmdLayout = { dx: number; dy: number; w: number; h: number; rot: number; z: number };
+    type CmdLayout = {
+      dx: number;
+      dy: number;
+      w: number;
+      h: number;
+      rot: number;
+      z: number;
+    };
 
     const layouts: Record<number, CmdLayout[]> = {
-      0: [
-        { dx:   0, dy:    0, w: 500, h: 700, rot: 0, z: 0 },
-      ],
+      0: [{ dx: 0, dy: 0, w: 500, h: 700, rot: 0, z: 0 }],
       1: [
-        { dx: 130, dy:  80, w: 390, h: 546, rot:  0.07, z: 1 },
+        { dx: 130, dy: 80, w: 390, h: 546, rot: 0.07, z: 1 },
         { dx: -90, dy: -80, w: 390, h: 546, rot: -0.07, z: 0 },
       ],
       2: [
-        { dx:    0, dy:  160, w: 300, h: 420, rot:  0,    z: 2 },
+        { dx: 0, dy: 160, w: 300, h: 420, rot: 0, z: 2 },
         { dx: -130, dy: -130, w: 300, h: 420, rot: -0.08, z: 0 },
-        { dx:  130, dy: -130, w: 300, h: 420, rot:  0.08, z: 1 },
+        { dx: 130, dy: -130, w: 300, h: 420, rot: 0.08, z: 1 },
       ],
       3: [
-        { dx:  130, dy:  160, w: 300, h: 420, rot: 0, z: 3 },
+        { dx: 130, dy: 160, w: 300, h: 420, rot: 0, z: 3 },
         { dx: -130, dy: -130, w: 300, h: 420, rot: 0, z: 0 },
-        { dx:  130, dy: -130, w: 300, h: 420, rot: 0, z: 1 },
-        { dx: -130, dy:  160, w: 300, h: 420, rot: 0, z: 2 },
+        { dx: 130, dy: -130, w: 300, h: 420, rot: 0, z: 1 },
+        { dx: -130, dy: 160, w: 300, h: 420, rot: 0, z: 2 },
       ],
     };
 
@@ -483,10 +642,13 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
     const PEEK_RATIO = 65 / 700;
 
     const slotDims = (i: number) => {
-      const hasPartner = !!state.partnerImgs[i] || (state.partnerImgLoadingStates[i] ?? false);
-      const hasBg = !!state.backgroundImgs[i] || (state.backgroundImgLoadingStates[i] ?? false);
+      const hasPartner =
+        !!state.partnerImgs[i] || (state.partnerImgLoadingStates[i] ?? false);
+      const hasBg =
+        !!state.backgroundImgs[i] ||
+        (state.backgroundImgLoadingStates[i] ?? false);
       const baseW = hasPartner ? Math.round(config[i].w * 0.82) : config[i].w;
-      const baseH = hasPartner ? Math.round(baseW * 161 / 115) : config[i].h;
+      const baseH = hasPartner ? Math.round((baseW * 161) / 115) : config[i].h;
       const peekH = hasBg ? Math.round(baseH * PEEK_RATIO) : 0;
       const w = hasBg ? Math.round(baseW * (1 - PEEK_RATIO)) : baseW;
       const h = hasBg ? Math.round(baseH * (1 - PEEK_RATIO)) : baseH;
@@ -498,10 +660,12 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
       return config[i].dy - peekH - h / 2;
     };
 
-    const cmdCY = headerRowY - Math.min(...config.map((_, i) => slotEffectiveTop(i)));
+    const cmdCY =
+      headerRowY - Math.min(...config.map((_, i) => slotEffectiveTop(i)));
 
-    const drawOrder = Array.from({ length: config.length }, (_, i) => i)
-      .sort((a, b) => config[a].z - config[b].z);
+    const drawOrder = Array.from({ length: config.length }, (_, i) => i).sort(
+      (a, b) => config[a].z - config[b].z,
+    );
     for (const i of drawOrder) {
       const mainImg = allImgs[i] ?? null;
       const mainLoading = allImgLoadingStates[i] ?? false;
@@ -521,37 +685,85 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
         const shiftY = h * 0.12;
 
         if (bgImg) {
-          drawCard(ctx, bgImg,
+          drawCard(
+            ctx,
+            bgImg,
             slotCX + ox - w / 2 - w * 0.06,
             slotCY + shiftY + oy - peekH - h / 2,
-            w, h, rot + SUB_ROT);
+            w,
+            h,
+            rot + SUB_ROT,
+          );
         } else if (bgLoading) {
-          drawPlaceholderCard(ctx,
+          drawPlaceholderCard(
+            ctx,
             slotCX + ox - w / 2 - w * 0.06,
             slotCY + shiftY + oy - peekH - h / 2,
-            w, h, rot + SUB_ROT);
+            w,
+            h,
+            rot + SUB_ROT,
+          );
         }
         if (partnerImg) {
-          drawCard(ctx, partnerImg, slotCX - ox - w / 2, slotCY + shiftY - oy - h / 2, w, h, rot - SUB_ROT);
+          drawCard(
+            ctx,
+            partnerImg,
+            slotCX - ox - w / 2,
+            slotCY + shiftY - oy - h / 2,
+            w,
+            h,
+            rot - SUB_ROT,
+          );
         } else if (partnerLoading) {
-          drawPlaceholderCard(ctx, slotCX - ox - w / 2, slotCY + shiftY - oy - h / 2, w, h, rot - SUB_ROT);
+          drawPlaceholderCard(
+            ctx,
+            slotCX - ox - w / 2,
+            slotCY + shiftY - oy - h / 2,
+            w,
+            h,
+            rot - SUB_ROT,
+          );
         }
         if (mainImg) {
-          drawCard(ctx, mainImg, slotCX + ox - w / 2, slotCY + oy - h / 2, w, h, rot + SUB_ROT);
+          drawCard(
+            ctx,
+            mainImg,
+            slotCX + ox - w / 2,
+            slotCY + oy - h / 2,
+            w,
+            h,
+            rot + SUB_ROT,
+          );
         } else if (mainLoading) {
-          drawPlaceholderCard(ctx, slotCX + ox - w / 2, slotCY + oy - h / 2, w, h, rot + SUB_ROT);
+          drawPlaceholderCard(
+            ctx,
+            slotCX + ox - w / 2,
+            slotCY + oy - h / 2,
+            w,
+            h,
+            rot + SUB_ROT,
+          );
         }
       } else {
         if (bgImg) {
-          drawCard(ctx, bgImg,
+          drawCard(
+            ctx,
+            bgImg,
             slotCX - w / 2 - w * 0.06,
             slotCY - peekH - h / 2,
-            w, h, rot);
+            w,
+            h,
+            rot,
+          );
         } else if (bgLoading) {
-          drawPlaceholderCard(ctx,
+          drawPlaceholderCard(
+            ctx,
             slotCX - w / 2 - w * 0.06,
             slotCY - peekH - h / 2,
-            w, h, rot);
+            w,
+            h,
+            rot,
+          );
         }
         if (mainImg) {
           drawCard(ctx, mainImg, slotCX - w / 2, slotCY - h / 2, w, h, rot);
@@ -577,10 +789,12 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
       const titleCX = rightX + rightW / 2;
       const lines = state.title.split("\n").filter((l) => l.trim());
       ctx.font = `bold ${titleSize}px 'Cormorant Garamond', serif`;
-      const minScale = Math.min(...lines.map((line) => {
-        const lw = ctx.measureText(line).width;
-        return lw > rightW ? rightW / lw : 1;
-      }));
+      const minScale = Math.min(
+        ...lines.map((line) => {
+          const lw = ctx.measureText(line).width;
+          return lw > rightW ? rightW / lw : 1;
+        }),
+      );
       const actualSize = Math.floor(titleSize * minScale);
       ctx.font = `bold ${actualSize}px 'Cormorant Garamond', serif`;
       lines.forEach((line, i) => {
@@ -599,7 +813,8 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
     const titleCX = rightX + rightW / 2;
 
     if (iconsVisible) {
-      const totalIconW = activeColors.length * iconSize + (activeColors.length - 1) * iconGap;
+      const totalIconW =
+        activeColors.length * iconSize + (activeColors.length - 1) * iconGap;
       let ix = titleCX - totalIconW / 2;
       for (const color of activeColors) {
         const img = state.colorIcons[color];
@@ -622,7 +837,8 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
       ctx.shadowBlur = 12;
       ctx.shadowColor = "rgba(0,0,0,0.5)";
       ctx.beginPath();
-      ctx.moveTo(bx + br, by); ctx.lineTo(bx + bw - br, by);
+      ctx.moveTo(bx + br, by);
+      ctx.lineTo(bx + bw - br, by);
       ctx.arcTo(bx + bw, by, bx + bw, by + br, br);
       ctx.arcTo(bx + bw, by + bracketH, bx + bw - br, by + bracketH, br);
       ctx.lineTo(bx + br, by + bracketH);
@@ -636,13 +852,15 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
       ctx.restore();
     }
 
-    const headerBottomY = (state.bracket || iconsVisible)
-      ? bracketRowY + (state.bracket ? bracketH + 8 : iconsVisible ? iconSize + 8 : 0)
-      : rowY;
+    const headerBottomY =
+      state.bracket || iconsVisible
+        ? bracketRowY +
+          (state.bracket ? bracketH + 8 : iconsVisible ? iconSize + 8 : 0)
+        : rowY;
 
     // Description
     const descAreaTop = Math.max(headerBottomY + 30, 120);
-    const keyCardsTop = H * 0.67;
+    const keyCardsTop = state.shape === "square" ? H * 0.67 : H - 40;
 
     if (state.description) {
       ctx.save();
@@ -657,8 +875,13 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
         ctx.font = `${descSize}px 'Segoe UI', Tahoma, sans-serif`;
         wrappedLines = state.description
           .split("\n")
-          .flatMap((para) => para === "" ? [""] : wrapText(ctx, para, rightW));
-        const lastLineBottom = descAreaTop + 2 * descSize + (wrappedLines.length - 1) * (descSize + 10);
+          .flatMap((para) =>
+            para === "" ? [""] : wrapText(ctx, para, rightW),
+          );
+        const lastLineBottom =
+          descAreaTop +
+          2 * descSize +
+          (wrappedLines.length - 1) * (descSize + 10);
         if (lastLineBottom <= keyCardsTop - 20) break;
         descSize--;
       }
@@ -670,48 +893,59 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
       ctx.restore();
     }
 
-    // Key Cards — bottom third
-    const keySlots = state.keyCardImgs.map((img, i) => ({
-      img,
-      loading: state.keyCardLoadingStates[i] ?? false,
-    })).filter((s) => s.img || s.loading);
-    if (keySlots.length > 0) {
-      const keyAreaH = H - 40 - keyCardsTop;
-      const keyH = Math.min(keyAreaH * 0.88, 300);
-      const keyW = keyH * (115 / 161);
-      const totalKeysW = keySlots.length * keyW + (keySlots.length - 1) * 20;
-      const startX = (W - totalKeysW) / 2;
-      const cardY = keyCardsTop + 35 + (keyAreaH - keyH) / 2;
+    // Key Cards — bottom third (square only)
+    if (state.shape === "square") {
+      const keySlots = state.keyCardImgs
+        .map((img, i) => ({
+          img,
+          loading: state.keyCardLoadingStates[i] ?? false,
+        }))
+        .filter((s) => s.img || s.loading);
+      if (keySlots.length > 0) {
+        const keyAreaH = H - 40 - keyCardsTop;
+        const keyH = Math.min(keyAreaH * 0.88, 300);
+        const keyW = keyH * (115 / 161);
+        const totalKeysW = keySlots.length * keyW + (keySlots.length - 1) * 20;
+        const startX = (W - totalKeysW) / 2;
+        const cardY = keyCardsTop + 35 + (keyAreaH - keyH) / 2;
 
-      ctx.save();
-      ctx.font = "bold 48px 'Cormorant Garamond', serif";
-      ctx.fillStyle = palette.accent;
-      ctx.shadowBlur = 8;
-      ctx.shadowColor = "rgba(0,0,0,0.7)";
-      ctx.textAlign = "center";
-      ctx.fillText("Key Cards", W / 2, keyCardsTop + 20);
-      ctx.restore();
+        ctx.save();
+        ctx.font = "bold 48px 'Cormorant Garamond', serif";
+        ctx.fillStyle = palette.accent;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = "rgba(0,0,0,0.7)";
+        ctx.textAlign = "center";
+        ctx.fillText("Key Cards", W / 2, keyCardsTop + 20);
+        ctx.restore();
 
-      for (let i = 0; i < keySlots.length; i++) {
-        const { img, loading } = keySlots[i];
-        if (img) {
-          drawCard(ctx, img, startX + i * (keyW + 20), cardY, keyW, keyH);
-        } else if (loading) {
-          drawPlaceholderCard(ctx, startX + i * (keyW + 20), cardY, keyW, keyH);
+        for (let i = 0; i < keySlots.length; i++) {
+          const { img, loading } = keySlots[i];
+          if (img) {
+            drawCard(ctx, img, startX + i * (keyW + 20), cardY, keyW, keyH);
+          } else if (loading) {
+            drawPlaceholderCard(ctx, startX + i * (keyW + 20), cardY, keyW, keyH);
+          }
         }
       }
     }
   }
 
   // ─── Common: vignette, QR, border ───
-  const vig = ctx.createRadialGradient(W / 2, H / 2, W * 0.35, W / 2, H / 2, Math.hypot(W / 2, H / 2) * 1.2);
+  const vig = ctx.createRadialGradient(
+    W / 2,
+    H / 2,
+    W * 0.35,
+    W / 2,
+    H / 2,
+    Math.hypot(W / 2, H / 2) * 1.2,
+  );
   vig.addColorStop(0, "transparent");
   vig.addColorStop(1, "rgba(0,0,0,0.45)");
   ctx.fillStyle = vig;
   ctx.fillRect(0, 0, W, H);
 
   if (state.qrImg) {
-    const qrSize = state.shape === 'card' ? 210 : 140;
+    const qrSize = state.shape === "vertical" ? 210 : 140;
     const qrX = W - 48 - qrSize;
     const qrY = H - 48 - qrSize;
     ctx.save();

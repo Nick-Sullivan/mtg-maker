@@ -78,7 +78,7 @@ function useDebounce<T>(value: T, delay: number): T {
   return d;
 }
 
-type Shape = 'square' | 'card';
+type Shape = 'square' | 'vertical' | 'horizontal';
 const PREVIEW_SIZE = CANVAS_SIZE / 2;
 
 export function DeckShowcase() {
@@ -629,7 +629,7 @@ export function DeckShowcase() {
             ref={canvasRef}
             width={getCanvasDimensions(shape, PREVIEW_SIZE).width}
             height={getCanvasDimensions(shape, PREVIEW_SIZE).height}
-            className={`showcase-canvas${shape === 'card' ? ' showcase-canvas--card' : ''}`}
+            className={`showcase-canvas${shape === 'vertical' ? ' showcase-canvas--vertical' : ''}`}
           />
           <div className="showcase-shape-toggle">
             <button
@@ -637,9 +637,13 @@ export function DeckShowcase() {
               onClick={() => setShape('square')}
             >Square</button>
             <button
-              className={`shape-btn ${shape === 'card' ? 'active' : ''}`}
-              onClick={() => setShape('card')}
-            >Card</button>
+              className={`shape-btn ${shape === 'vertical' ? 'active' : ''}`}
+              onClick={() => setShape('vertical')}
+            >Vertical</button>
+            <button
+              className={`shape-btn ${shape === 'horizontal' ? 'active' : ''}`}
+              onClick={() => setShape('horizontal')}
+            >Horizontal</button>
           </div>
           <div className="showcase-preview-actions">
             <button className="showcase-download-btn" onClick={handleDownload}>
