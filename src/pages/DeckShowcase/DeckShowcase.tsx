@@ -41,6 +41,7 @@ const DEFAULT_SHOWCASE: ShowcaseExport = {
   deckUrl: "",
   manualColorIdentity: ["B"],
   showColorIcons: true,
+  tags: "default, meme, scoop with extra steps",
   commanders: [
     {
       name: "Phage the Untouchable",
@@ -110,7 +111,7 @@ export function DeckShowcase() {
     string[] | null
   >(null);
   const [showColorIcons, setShowColorIcons] = useState(true);
-  const [shape, setShape] = useState<Shape>('square');
+  const [shape, setShape] = useState<Shape>('horizontal');
 
   const [colorIconImgs, setColorIconImgs] = useState<
     Partial<Record<string, HTMLImageElement>>
@@ -639,17 +640,17 @@ export function DeckShowcase() {
           />
           <div className="showcase-shape-toggle">
             <button
-              className={`shape-btn ${shape === 'square' ? 'active' : ''}`}
-              onClick={() => setShape('square')}
-            >Square</button>
+              className={`shape-btn ${shape === 'horizontal' ? 'active' : ''}`}
+              onClick={() => setShape('horizontal')}
+            >Horizontal</button>
             <button
               className={`shape-btn ${shape === 'vertical' ? 'active' : ''}`}
               onClick={() => setShape('vertical')}
             >Vertical</button>
             <button
-              className={`shape-btn ${shape === 'horizontal' ? 'active' : ''}`}
-              onClick={() => setShape('horizontal')}
-            >Horizontal</button>
+              className={`shape-btn ${shape === 'square' ? 'active' : ''}`}
+              onClick={() => setShape('square')}
+            >Square</button>
           </div>
           <div className="showcase-preview-actions">
             <button className="showcase-download-btn" onClick={handleDownload}>
@@ -871,8 +872,10 @@ export function DeckShowcase() {
             </select>
           </div>
 
-          <div className="showcase-field showcase-field--bracket">
-            <label>Tags</label>
+          <div className="showcase-section">
+            <div className="showcase-section-header">
+              <h3 className="showcase-section-title">Tags</h3>
+            </div>
             <input
               type="text"
               value={tagsInput}
