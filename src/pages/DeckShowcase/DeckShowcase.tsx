@@ -26,6 +26,7 @@ interface ShowcaseExport {
   deckUrl: string;
   manualColorIdentity: string[] | null;
   showColorIcons: boolean;
+  tags?: string;
   commanders: { name: string; scryfallId?: string; type?: string }[];
   keyCards: { name: string; scryfallId?: string }[];
 }
@@ -87,6 +88,7 @@ export function DeckShowcase() {
 
   const [title, setTitle] = useState("");
   const [bracket, setBracket] = useState("");
+  const [tagsInput, setTagsInput] = useState("");
   const [description, setDescription] = useState("");
 
   const [commanderNames, setCommanderNames] = useState<string[]>([""]);
@@ -309,6 +311,7 @@ export function DeckShowcase() {
       colorIdentity: manualColorIdentity ?? commanders[0]?.colorIdentity ?? [],
       colorIcons: colorIconImgs,
       showColorIcons,
+      tags: tagsInput.split(",").map((t) => t.trim()).filter(Boolean),
       qrImg,
       shape,
     };
@@ -327,6 +330,7 @@ export function DeckShowcase() {
   }, [
     title,
     bracket,
+    tagsInput,
     description,
     keyImgs,
     keys,
@@ -440,6 +444,7 @@ export function DeckShowcase() {
       deckUrl,
       manualColorIdentity,
       showColorIcons,
+      tags: tagsInput || undefined,
       commanders: commanders.map((c, i) => ({
         name: commanderNames[i],
         scryfallId: c?.allPrintings[c.selectedIndex]?.id,
@@ -465,6 +470,7 @@ export function DeckShowcase() {
     async (data: ShowcaseExport) => {
       setTitle(data.title ?? "");
       setBracket(data.bracket ?? "");
+      setTagsInput(data.tags ?? "");
       setDescription(data.description ?? "");
       setDeckUrl(data.deckUrl ?? "");
       setManualColorIdentity(data.manualColorIdentity ?? null);
@@ -863,6 +869,17 @@ export function DeckShowcase() {
               </option>
               <option value="Bracket 5 - cEDH">Bracket 5 - cEDH</option>
             </select>
+          </div>
+
+          <div className="showcase-field showcase-field--bracket">
+            <label>Tags</label>
+            <input
+              type="text"
+              value={tagsInput}
+              onChange={(e) => setTagsInput(e.target.value)}
+              placeholder="aggro, combo, stax..."
+              className="showcase-input"
+            />
           </div>
 
           <div className="showcase-section">

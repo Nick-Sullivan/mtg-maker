@@ -30,6 +30,7 @@ export interface DrawState {
   colorIdentity: string[];
   colorIcons: Partial<Record<string, HTMLImageElement>>;
   showColorIcons: boolean;
+  tags: string[];
   qrImg: HTMLImageElement | null;
   shape: "square" | "vertical" | "horizontal";
 }
@@ -607,6 +608,7 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
     // Square mode layout
     // ═══════════════════════════════════════
 
+    const isHorizontal = state.shape === "horizontal";
     const cmdCX = S * 0.26;
     const headerRowY = 36;
 
@@ -638,7 +640,12 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
       ],
     };
 
-    const config = layouts[altCount] ?? layouts[2];
+    const baseConfig = layouts[altCount] ?? layouts[2];
+    // For horizontal with 2 commanders, pull the right (front) card slightly left
+    const config =
+      isHorizontal && altCount === 1
+        ? baseConfig.map((c, i) => (i === 0 ? { ...c, dx: c.dx - 60 } : c))
+        : baseConfig;
     const PEEK_RATIO = 65 / 700;
 
     const slotDims = (i: number) => {
@@ -773,11 +780,11 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
       }
     }
 
-    const rightX = S * 0.56;
+    const rightX = isHorizontal ? S * 0.52 : S * 0.56;
     const rightW = S - rightX - 35;
 
     // Title — top of right column
-    const titleSize = 84;
+    const titleSize = isHorizontal ? 68 : 84;
     let titleBottomY = 36;
     if (state.title) {
       ctx.save();
@@ -806,95 +813,247 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
 
     // Color icons + bracket badge
     const rowY = titleBottomY - 25;
-    const iconSize = 42;
+    const iconSize = isHorizontal ? 34 : 42;
     const iconGap = 7;
     const activeColors = WUBRG.filter((c) => state.colorIdentity.includes(c));
     const iconsVisible = state.showColorIcons && activeColors.length > 0;
     const titleCX = rightX + rightW / 2;
+    const keyCardsTop = isHorizontal ? H * 0.64 : H * 0.67;
 
-    if (iconsVisible) {
-      const totalIconW =
-        activeColors.length * iconSize + (activeColors.length - 1) * iconGap;
-      let ix = titleCX - totalIconW / 2;
-      for (const color of activeColors) {
-        const img = state.colorIcons[color];
-        if (img) ctx.drawImage(img, ix, rowY, iconSize, iconSize);
-        ix += iconSize + iconGap;
+    if (isHorizontal) {
+      // Left side of right column: colors + bracket.
+      // Right side: tags. Description sits below both.
+      const totalIconW = iconsVisible
+        ? activeColors.length * iconSize + (activeColors.length - 1) * iconGap
+        : 0;
+      const bFontSize = 21;
+      ctx.font = `bold ${bFontSize}px Philosopher, 'Segoe UI', Tahoma, serif`;
+      const bTextW = state.bracket ? ctx.measureText(state.bracket).width + 30 : 0;
+      const metaContentW = Math.max(totalIconW, bTextW);
+
+      const bracketH = 34;
+      const metaDescY = Math.max(titleBottomY - 20, 120);
+      const hasTags = state.tags.length > 0;
+      // With tags: colours/bracket centred in left half, tags start at column midpoint
+      // Without tags: colours/bracket centred across the full column
+      const colMid = rightX + rightW / 2;
+      const metaOffsetX = hasTags
+        ? rightX + (rightW / 2 - metaContentW) / 2
+        : rightX + (rightW - metaContentW) / 2;
+
+      if (iconsVisible) {
+        let ix = metaOffsetX + (metaContentW - totalIconW) / 2;
+        for (const color of activeColors) {
+          const img = state.colorIcons[color];
+          if (img) ctx.drawImage(img, ix, metaDescY, iconSize, iconSize);
+          ix += iconSize + iconGap;
+        }
+      }
+
+      let metaBlockH = iconsVisible ? iconSize : 0;
+      if (state.bracket) {
+        metaBlockH += (iconsVisible ? 8 : 0) + bracketH;
+        const bw = bTextW;
+        const br = bracketH / 2;
+        const by = metaDescY + (iconsVisible ? iconSize + 8 : 0);
+        const bx = metaOffsetX + (metaContentW - bw) / 2;
+        ctx.save();
+        ctx.font = `bold ${bFontSize}px Philosopher, 'Segoe UI', Tahoma, serif`;
+        ctx.fillStyle = palette.accent + "cc";
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = "rgba(0,0,0,0.5)";
+        ctx.beginPath();
+        ctx.moveTo(bx + br, by);
+        ctx.lineTo(bx + bw - br, by);
+        ctx.arcTo(bx + bw, by, bx + bw, by + br, br);
+        ctx.arcTo(bx + bw, by + bracketH, bx + bw - br, by + bracketH, br);
+        ctx.lineTo(bx + br, by + bracketH);
+        ctx.arcTo(bx, by + bracketH, bx, by + bracketH - br, br);
+        ctx.arcTo(bx, by, bx + br, by, br);
+        ctx.closePath();
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(state.bracket, bx + 15, by + bracketH * 0.69);
+        ctx.restore();
+      }
+
+      // Tags — right half, centred horizontally per row and vertically within metaBlockH
+      let tagsBottomY = metaDescY;
+      if (hasTags) {
+        const tagAreaX = colMid;
+        const tagAreaW = rightX + rightW - tagAreaX;
+        const tagFontSize = 19;
+        const tagH = 28;
+        const tagPadX = 12;
+        const tagGapX = 6;
+        const tagGapY = 6;
+        const tagR = tagH / 2;
+        ctx.font = `${tagFontSize}px 'Segoe UI', Tahoma, sans-serif`;
+
+        // Layout pass: build rows of {tag, tw}
+        const rows: { tag: string; tw: number }[][] = [];
+        let currentRow: { tag: string; tw: number }[] = [];
+        let currentRowW = 0;
+        for (const tag of state.tags) {
+          const tw = ctx.measureText(tag).width + tagPadX * 2;
+          const needed = currentRow.length > 0 ? tagGapX + tw : tw;
+          if (currentRow.length > 0 && currentRowW + needed > tagAreaW) {
+            rows.push(currentRow);
+            currentRow = [{ tag, tw }];
+            currentRowW = tw;
+          } else {
+            currentRow.push({ tag, tw });
+            currentRowW += needed;
+          }
+        }
+        if (currentRow.length > 0) rows.push(currentRow);
+
+        const totalTagsH = rows.length * tagH + (rows.length - 1) * tagGapY;
+        const tyStart = metaDescY + (metaBlockH - totalTagsH) / 2;
+
+        for (let ri = 0; ri < rows.length; ri++) {
+          const row = rows[ri];
+          const rowW = row.reduce((s, r) => s + r.tw, 0) + (row.length - 1) * tagGapX;
+          let tx = tagAreaX + (tagAreaW - rowW) / 2;
+          const ty = tyStart + ri * (tagH + tagGapY);
+          for (const { tag, tw } of row) {
+            ctx.save();
+            ctx.fillStyle = "rgba(255,255,255,0.12)";
+            ctx.beginPath();
+            ctx.moveTo(tx + tagR, ty);
+            ctx.lineTo(tx + tw - tagR, ty);
+            ctx.arcTo(tx + tw, ty, tx + tw, ty + tagR, tagR);
+            ctx.arcTo(tx + tw, ty + tagH, tx + tw - tagR, ty + tagH, tagR);
+            ctx.lineTo(tx + tagR, ty + tagH);
+            ctx.arcTo(tx, ty + tagH, tx, ty + tagH - tagR, tagR);
+            ctx.arcTo(tx, ty, tx + tagR, ty, tagR);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = "rgba(255,255,255,0.75)";
+            ctx.shadowBlur = 4;
+            ctx.shadowColor = "rgba(0,0,0,0.5)";
+            ctx.fillText(tag, tx + tagPadX, ty + tagH * 0.68);
+            ctx.restore();
+            tx += tw + tagGapX;
+          }
+        }
+        tagsBottomY = tyStart + totalTagsH + 8;
+      }
+
+      // Description below both meta and tags
+      const hHeaderBottomY = Math.max(metaDescY + metaBlockH, tagsBottomY);
+      const hDescAreaTop = hHeaderBottomY + 16;
+
+      if (state.description) {
+        ctx.save();
+        ctx.fillStyle = "rgba(255,255,255,0.82)";
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = "rgba(0,0,0,0.7)";
+        const maxDescSize = 30;
+        const minDescSize = 14;
+        let descSize = maxDescSize;
+        let wrappedLines: string[] = [];
+        while (descSize >= minDescSize) {
+          ctx.font = `${descSize}px 'Segoe UI', Tahoma, sans-serif`;
+          wrappedLines = state.description
+            .split("\n")
+            .flatMap((para) => (para === "" ? [""] : wrapText(ctx, para, rightW)));
+          const lastLineBottom =
+            hDescAreaTop + 2 * descSize + (wrappedLines.length - 1) * (descSize + 10);
+          if (lastLineBottom <= keyCardsTop - 20) break;
+          descSize--;
+        }
+        let y = hDescAreaTop + descSize;
+        for (const line of wrappedLines) {
+          ctx.fillText(line, rightX, y);
+          y += descSize + 10;
+        }
+        ctx.restore();
+      }
+    } else {
+      if (iconsVisible) {
+        const totalIconW =
+          activeColors.length * iconSize + (activeColors.length - 1) * iconGap;
+        let ix = titleCX - totalIconW / 2;
+        for (const color of activeColors) {
+          const img = state.colorIcons[color];
+          if (img) ctx.drawImage(img, ix, rowY, iconSize, iconSize);
+          ix += iconSize + iconGap;
+        }
+      }
+
+      const bracketRowY = iconsVisible ? rowY + iconSize + 8 : rowY;
+      let bracketH = 0;
+      if (state.bracket) {
+        ctx.font = `bold 26px Philosopher, 'Segoe UI', Tahoma, serif`;
+        const bw = ctx.measureText(state.bracket).width + 30;
+        bracketH = 42;
+        const br = bracketH / 2;
+        const bx = titleCX - bw / 2;
+        const by = bracketRowY;
+        ctx.save();
+        ctx.fillStyle = palette.accent + "cc";
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = "rgba(0,0,0,0.5)";
+        ctx.beginPath();
+        ctx.moveTo(bx + br, by);
+        ctx.lineTo(bx + bw - br, by);
+        ctx.arcTo(bx + bw, by, bx + bw, by + br, br);
+        ctx.arcTo(bx + bw, by + bracketH, bx + bw - br, by + bracketH, br);
+        ctx.lineTo(bx + br, by + bracketH);
+        ctx.arcTo(bx, by + bracketH, bx, by + bracketH - br, br);
+        ctx.arcTo(bx, by, bx + br, by, br);
+        ctx.closePath();
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(state.bracket, bx + 15, by + bracketH * 0.69);
+        ctx.restore();
+      }
+
+      const headerBottomY =
+        state.bracket || iconsVisible
+          ? bracketRowY +
+            (state.bracket ? bracketH + 8 : iconsVisible ? iconSize + 8 : 0)
+          : rowY;
+
+      const descAreaTop = Math.max(headerBottomY + 30, 120);
+
+      if (state.description) {
+        ctx.save();
+        ctx.fillStyle = "rgba(255,255,255,0.82)";
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = "rgba(0,0,0,0.7)";
+        const maxDescSize = 38;
+        const minDescSize = 14;
+        let descSize = maxDescSize;
+        let wrappedLines: string[] = [];
+        while (descSize >= minDescSize) {
+          ctx.font = `${descSize}px 'Segoe UI', Tahoma, sans-serif`;
+          wrappedLines = state.description
+            .split("\n")
+            .flatMap((para) =>
+              para === "" ? [""] : wrapText(ctx, para, rightW),
+            );
+          const lastLineBottom =
+            descAreaTop +
+            2 * descSize +
+            (wrappedLines.length - 1) * (descSize + 10);
+          if (lastLineBottom <= keyCardsTop - 20) break;
+          descSize--;
+        }
+        let y = descAreaTop + descSize;
+        for (const line of wrappedLines) {
+          ctx.fillText(line, rightX, y);
+          y += descSize + 10;
+        }
+        ctx.restore();
       }
     }
 
-    const bracketRowY = iconsVisible ? rowY + iconSize + 8 : rowY;
-    let bracketH = 0;
-    if (state.bracket) {
-      ctx.font = "bold 26px Philosopher, 'Segoe UI', Tahoma, serif";
-      const bw = ctx.measureText(state.bracket).width + 30;
-      bracketH = 42;
-      const br = bracketH / 2;
-      const bx = titleCX - bw / 2;
-      const by = bracketRowY;
-      ctx.save();
-      ctx.fillStyle = palette.accent + "cc";
-      ctx.shadowBlur = 12;
-      ctx.shadowColor = "rgba(0,0,0,0.5)";
-      ctx.beginPath();
-      ctx.moveTo(bx + br, by);
-      ctx.lineTo(bx + bw - br, by);
-      ctx.arcTo(bx + bw, by, bx + bw, by + br, br);
-      ctx.arcTo(bx + bw, by + bracketH, bx + bw - br, by + bracketH, br);
-      ctx.lineTo(bx + br, by + bracketH);
-      ctx.arcTo(bx, by + bracketH, bx, by + bracketH - br, br);
-      ctx.arcTo(bx, by, bx + br, by, br);
-      ctx.closePath();
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = "#ffffff";
-      ctx.fillText(state.bracket, bx + 15, by + 29);
-      ctx.restore();
-    }
-
-    const headerBottomY =
-      state.bracket || iconsVisible
-        ? bracketRowY +
-          (state.bracket ? bracketH + 8 : iconsVisible ? iconSize + 8 : 0)
-        : rowY;
-
-    // Description
-    const descAreaTop = Math.max(headerBottomY + 30, 120);
-    const keyCardsTop = state.shape === "square" ? H * 0.67 : H - 40;
-
-    if (state.description) {
-      ctx.save();
-      ctx.fillStyle = "rgba(255,255,255,0.82)";
-      ctx.shadowBlur = 8;
-      ctx.shadowColor = "rgba(0,0,0,0.7)";
-      const maxDescSize = 38;
-      const minDescSize = 14;
-      let descSize = maxDescSize;
-      let wrappedLines: string[] = [];
-      while (descSize >= minDescSize) {
-        ctx.font = `${descSize}px 'Segoe UI', Tahoma, sans-serif`;
-        wrappedLines = state.description
-          .split("\n")
-          .flatMap((para) =>
-            para === "" ? [""] : wrapText(ctx, para, rightW),
-          );
-        const lastLineBottom =
-          descAreaTop +
-          2 * descSize +
-          (wrappedLines.length - 1) * (descSize + 10);
-        if (lastLineBottom <= keyCardsTop - 20) break;
-        descSize--;
-      }
-      let y = descAreaTop + descSize;
-      for (const line of wrappedLines) {
-        ctx.fillText(line, rightX, y);
-        y += descSize + 10;
-      }
-      ctx.restore();
-    }
-
-    // Key Cards — bottom third (square only)
-    if (state.shape === "square") {
+    // Key Cards — bottom (square and horizontal)
+    if (state.shape === "square" || isHorizontal) {
       const keySlots = state.keyCardImgs
         .map((img, i) => ({
           img,
@@ -902,20 +1061,25 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
         }))
         .filter((s) => s.img || s.loading);
       if (keySlots.length > 0) {
-        const keyAreaH = H - 40 - keyCardsTop;
-        const keyH = Math.min(keyAreaH * 0.88, 300);
+        const areaLeft = isHorizontal ? rightX : 0;
+        const areaWidth = isHorizontal ? rightW : W;
+        const labelSize = isHorizontal ? 36 : 48;
+        const labelY = keyCardsTop + (isHorizontal ? 16 : 20);
+        const cardsTop = isHorizontal ? labelY + labelSize * 0.4 : keyCardsTop + 35;
+        const keyAreaH = H - 40 - (isHorizontal ? cardsTop : keyCardsTop);
+        const keyH = Math.min(keyAreaH * (isHorizontal ? 0.98 : 0.88), isHorizontal ? 360 : 300);
         const keyW = keyH * (115 / 161);
         const totalKeysW = keySlots.length * keyW + (keySlots.length - 1) * 20;
-        const startX = (W - totalKeysW) / 2;
-        const cardY = keyCardsTop + 35 + (keyAreaH - keyH) / 2;
+        const startX = areaLeft + (areaWidth - totalKeysW) / 2;
+        const cardY = isHorizontal ? cardsTop + (keyAreaH - keyH) / 2 : keyCardsTop + 35 + (keyAreaH - keyH) / 2;
 
         ctx.save();
-        ctx.font = "bold 48px 'Cormorant Garamond', serif";
+        ctx.font = `bold ${labelSize}px 'Cormorant Garamond', serif`;
         ctx.fillStyle = palette.accent;
         ctx.shadowBlur = 8;
         ctx.shadowColor = "rgba(0,0,0,0.7)";
         ctx.textAlign = "center";
-        ctx.fillText("Key Cards", W / 2, keyCardsTop + 20);
+        ctx.fillText("Key Cards", areaLeft + areaWidth / 2, labelY);
         ctx.restore();
 
         for (let i = 0; i < keySlots.length; i++) {
@@ -946,7 +1110,7 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
 
   if (state.qrImg) {
     const qrSize = state.shape === "vertical" ? 210 : 140;
-    const qrX = W - 48 - qrSize;
+    const qrX = state.shape === "horizontal" ? 48 : W - 48 - qrSize;
     const qrY = H - 48 - qrSize;
     ctx.save();
     ctx.fillStyle = "rgba(255,255,255,0.92)";
