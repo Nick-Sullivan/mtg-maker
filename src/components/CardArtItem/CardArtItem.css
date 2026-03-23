@@ -31,11 +31,11 @@
 .card-art-item img {
   width: 100%;
   border-radius: 8px;
-  box-shadow: 
+  box-shadow:
     0 4px 8px rgba(0, 0, 0, 0.4),
-    0 0 12px rgba(46, 125, 50, 0.3);
+    0 0 12px rgba(var(--col-btn-rgb), 0.3);
   transition: transform 0.2s, box-shadow 0.2s;
-  border: 2px solid rgba(76, 175, 80, 0.2);
+  border: 2px solid rgba(var(--col-btn-rgb), 0.2);
 }
 
 /* Remove inner borders and border-radius for double-faced cards */
@@ -52,10 +52,10 @@
 /* Individual image hover for single-faced cards */
 .card-art-item:not(.double-faced)[style*="cursor: pointer"] img:hover {
   transform: scale(1.05);
-  box-shadow: 
+  box-shadow:
     0 6px 12px rgba(0, 0, 0, 0.5),
-    0 0 20px rgba(76, 175, 80, 0.6);
-  border-color: rgba(76, 175, 80, 0.5);
+    0 0 20px rgba(var(--col-btn-rgb), 0.6);
+  border-color: rgba(var(--col-btn-rgb), 0.5);
 }
 
 /* Container hover for double-faced cards - scale the whole container */
@@ -70,16 +70,16 @@
 
 /* Apply hover effects to both images when hovering the container */
 .card-art-item.double-faced[style*="cursor: pointer"]:hover img {
-  box-shadow: 
+  box-shadow:
     0 6px 12px rgba(0, 0, 0, 0.5),
-    0 0 20px rgba(76, 175, 80, 0.6);
-  border-color: rgba(76, 175, 80, 0.5);
+    0 0 20px rgba(var(--col-btn-rgb), 0.6);
+  border-color: rgba(var(--col-btn-rgb), 0.5);
 }
 
 .card-label {
   text-align: center;
   font-size: 0.9rem;
-  color: #a8d5a8;
+  color: var(--col-accent-muted);
   font-weight: 500;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   width: 100%;
@@ -88,14 +88,14 @@
 .card-placeholder {
   width: 200px;
   height: 280px;
-  background: rgba(13, 31, 13, 0.6);
-  border: 2px dashed rgba(76, 175, 80, 0.5);
+  background: rgba(var(--col-surface-dark-rgb), 0.6);
+  border: 2px dashed rgba(var(--col-btn-rgb), 0.5);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: #a8d5a8;
+  color: var(--col-accent-muted);
   padding: 20px;
   white-space: pre-line;
 }
@@ -105,20 +105,20 @@
   top: 8px;
   left: 8px;
   background: rgba(0, 0, 0, 0.85);
-  color: #7dff7d;
+  color: var(--col-accent);
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.7rem;
   font-weight: 600;
   pointer-events: none;
-  border: 1px solid rgba(76, 175, 80, 0.3);
+  border: 1px solid rgba(var(--col-btn-rgb), 0.3);
 }
 
 .click-hint {
   position: absolute;
   bottom: 8px;
   right: 8px;
-  background: rgba(46, 125, 50, 0.9);
+  background: rgba(var(--col-btn-rgb), 0.9);
   color: #e8f5e9;
   padding: 4px 8px;
   border-radius: 4px;
@@ -127,7 +127,7 @@
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.2s;
-  border: 1px solid rgba(76, 175, 80, 0.5);
+  border: 1px solid rgba(var(--col-btn-rgb), 0.5);
 }
 
 .card-art-item[style*="cursor: pointer"]:hover .click-hint {
@@ -137,19 +137,19 @@
 .card-loading-container {
   width: 200px;
   height: 280px;
-  background: rgba(13, 31, 13, 0.6);
+  background: rgba(var(--col-surface-dark-rgb), 0.6);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid rgba(46, 125, 50, 0.3);
+  border: 2px solid rgba(var(--col-btn-rgb), 0.3);
 }
 
 .spinner {
   width: 50px;
   height: 50px;
-  border: 4px solid rgba(46, 125, 50, 0.3);
-  border-top: 4px solid #4caf50;
+  border: 4px solid rgba(var(--col-btn-rgb), 0.3);
+  border-top: 4px solid var(--col-btn-hover);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

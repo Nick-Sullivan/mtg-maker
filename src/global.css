@@ -5,9 +5,24 @@
   box-sizing: border-box;
 }
 
+:root {
+  --col-accent: #e8d8b0;
+  --col-accent-rgb: 232, 216, 176;
+  --col-accent-muted: #d4c090;
+  --col-accent-muted-rgb: 212, 192, 144;
+  --col-btn: #8a6820;
+  --col-btn-rgb: 138, 104, 32;
+  --col-btn-dark: #6a4e14;
+  --col-btn-hover: #a07828;
+  --col-surface: #1a1628;
+  --col-surface-rgb: 30, 22, 40;
+  --col-surface-dark: #0f0e17;
+  --col-surface-dark-rgb: 15, 12, 20;
+}
+
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #1a472a 0%, #2d5016 50%, #0f2027 100%);
+  background: linear-gradient(135deg, #0f0e17 0%, #1a1628 50%, #0a0a10 100%);
   min-height: 100vh;
   padding: 20px;
   position: relative;
@@ -23,12 +38,12 @@ body::before {
   background-image:
     radial-gradient(
       circle at 20% 50%,
-      rgba(34, 139, 34, 0.1) 0%,
+      rgba(var(--col-btn-rgb), 0.08) 0%,
       transparent 50%
     ),
     radial-gradient(
       circle at 80% 80%,
-      rgba(46, 125, 50, 0.15) 0%,
+      rgba(var(--col-btn-rgb), 0.12) 0%,
       transparent 50%
     );
   pointer-events: none;

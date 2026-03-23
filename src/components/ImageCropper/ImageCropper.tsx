@@ -36,13 +36,18 @@ export function ImageCropper({ imageUrl, onCropComplete, onCancel }: Params) {
         cropY = (img.height - cropHeight) / 2;
       }
 
-      // Create cropped image
+      // Create cropped image, capped at 480px wide to keep file sizes reasonable
+      const MAX_W = 960;
+      const scale = Math.min(1, MAX_W / cropWidth);
+      const outW = Math.round(cropWidth * scale);
+      const outH = Math.round(cropHeight * scale);
+
       const cropCanvas = document.createElement("canvas");
       const ctx = cropCanvas.getContext("2d");
       if (!ctx) return;
 
-      cropCanvas.width = cropWidth;
-      cropCanvas.height = cropHeight;
+      cropCanvas.width = outW;
+      cropCanvas.height = outH;
 
       ctx.drawImage(
         img,
@@ -52,11 +57,11 @@ export function ImageCropper({ imageUrl, onCropComplete, onCancel }: Params) {
         cropHeight,
         0,
         0,
-        cropWidth,
-        cropHeight
+        outW,
+        outH
       );
 
-      const croppedImageUrl = cropCanvas.toDataURL("image/png");
+      const croppedImageUrl = cropCanvas.toDataURL("image/jpeg", 0.88);
       setIsProcessing(false);
       onCropComplete(croppedImageUrl);
     };

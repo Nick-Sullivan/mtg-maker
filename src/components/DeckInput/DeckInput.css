@@ -5,17 +5,17 @@
 .input-section label {
   display: block;
   margin-bottom: 10px;
-  color: #7dff7d;
+  color: var(--col-accent);
   font-weight: 600;
   font-size: 1.1rem;
-  text-shadow: 0 0 8px rgba(125, 255, 125, 0.4);
+  text-shadow: 0 0 8px rgba(var(--col-accent-rgb), 0.4);
 }
 
 .input-section textarea {
   width: 100%;
   min-height: 300px;
   padding: 15px;
-  border: 2px solid rgba(46, 125, 50, 0.5);
+  border: 2px solid rgba(var(--col-btn-rgb), 0.5);
   border-radius: 8px;
   font-family: "Courier New", monospace;
   font-size: 14px;
@@ -23,25 +23,25 @@
   transition:
     border-color 0.3s,
     box-shadow 0.3s;
-  background: rgba(13, 31, 13, 0.4);
+  background: rgba(var(--col-surface-dark-rgb), 0.4);
   color: #e8f5e9;
 }
 
 .input-section textarea::placeholder {
-  color: rgba(168, 213, 168, 0.6);
+  color: rgba(var(--col-accent-muted-rgb), 0.6);
 }
 
 .input-section textarea:focus {
   outline: none;
-  border-color: #4caf50;
-  box-shadow: 0 0 12px rgba(76, 175, 80, 0.4);
+  border-color: var(--col-btn-hover);
+  box-shadow: 0 0 12px rgba(var(--col-btn-rgb), 0.4);
 }
 
 .card-count {
   text-align: center;
   margin-top: 15px;
   font-size: 1rem;
-  color: #a8d5a8;
+  color: var(--col-accent-muted);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
@@ -50,16 +50,16 @@
 }
 
 .input-section textarea::-webkit-scrollbar-track {
-  background: rgba(13, 31, 13, 0.6);
+  background: rgba(var(--col-surface-dark-rgb), 0.6);
   border-radius: 0 0 6px 0;
 }
 
 .input-section textarea::-webkit-scrollbar-thumb {
-  background: rgba(46, 125, 50, 0.6);
+  background: rgba(var(--col-btn-rgb), 0.6);
   border-radius: 6px;
-  border: 2px solid rgba(13, 31, 13, 0.6);
+  border: 2px solid rgba(var(--col-surface-dark-rgb), 0.6);
 }
 
 .input-section textarea::-webkit-scrollbar-thumb:hover {
-  background: rgba(76, 175, 80, 0.8);
+  background: rgba(var(--col-btn-rgb), 0.8);
 }

@@ -90,6 +90,7 @@ export function DeckShowcase() {
   const [title, setTitle] = useState("");
   const [bracket, setBracket] = useState("");
   const [tagsInput, setTagsInput] = useState("");
+  const [tagsHelpOpen, setTagsHelpOpen] = useState(false);
   const [description, setDescription] = useState("");
 
   const [commanderNames, setCommanderNames] = useState<string[]>([""]);
@@ -563,7 +564,8 @@ export function DeckShowcase() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `${(title || "deck-showcase").replace(/\s+/g, "_")}.png`;
+        const shapeSuffix = shape === "vertical" ? "_vertical" : "";
+        a.download = `${(title || "deck-showcase").replace(/\s+/g, "_")}${shapeSuffix}.png`;
         a.click();
         URL.revokeObjectURL(url);
       }, "image/png");
@@ -656,15 +658,17 @@ export function DeckShowcase() {
             <button className="showcase-download-btn" onClick={handleDownload}>
               Download PNG
             </button>
-            <button className="showcase-export-btn" onClick={handleExport}>
-              Export
-            </button>
-            <button
-              className="showcase-import-btn"
-              onClick={() => importRef.current?.click()}
-            >
-              Import
-            </button>
+            <div className="showcase-import-export">
+              <button className="showcase-export-btn" onClick={handleExport}>
+                Export
+              </button>
+              <button
+                className="showcase-import-btn"
+                onClick={() => importRef.current?.click()}
+              >
+                Import
+              </button>
+            </div>
             <input
               ref={importRef}
               type="file"
@@ -875,6 +879,34 @@ export function DeckShowcase() {
           <div className="showcase-section">
             <div className="showcase-section-header">
               <h3 className="showcase-section-title">Tags</h3>
+              <div className="tags-help-wrap">
+                <button
+                  className="tags-help-btn"
+                  onClick={() => setTagsHelpOpen((o) => !o)}
+                  aria-label="Common tags reference"
+                >
+                  ?
+                </button>
+                {tagsHelpOpen && (
+                  <div className="tags-help-popover">
+                    <p className="tags-help-heading">Common tags</p>
+                    <ul>
+                      <li><span>aggro</span> — fast, board-wide pressure</li>
+                      <li><span>aristocrats</span> — sacrifice and death triggers</li>
+                      <li><span>combo</span> — wins through infinite/game-ending combos</li>
+                      <li><span>control</span> — counters, removal, and card advantage</li>
+                      <li><span>group hug</span> — benefits all players</li>
+                      <li><span>midrange</span> — value and flexibility over speed</li>
+                      <li><span>pillowfort</span> — defensive deterrents</li>
+                      <li><span>reanimator</span> — recurs creatures from graveyards</li>
+                      <li><span>stax</span> — slows opponents via resource denial</li>
+                      <li><span>tokens</span> — goes wide with token generation</li>
+                      <li><span>tribal</span> — creature-type synergies</li>
+                      <li><span>voltron</span> — stacks one creature for commander damage</li>
+                    </ul>
+                  </div>
+                )}
+              </div>
             </div>
             <input
               type="text"

@@ -12,18 +12,18 @@
 }
 
 h1 {
-  color: #7dff7d;
+  color: var(--col-accent);
   font-size: 2.5rem;
   margin-bottom: 10px;
   text-shadow:
-    0 0 10px rgba(125, 255, 125, 0.5),
+    0 0 10px rgba(var(--col-accent-rgb), 0.3),
     0 2px 4px rgba(0, 0, 0, 0.8);
   font-weight: 700;
   letter-spacing: 1px;
 }
 
 .subtitle {
-  color: #a8d5a8;
+  color: var(--col-accent-muted);
   font-size: 1rem;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
@@ -60,25 +60,25 @@ button:disabled {
 
 .spacing-control label {
   font-weight: 600;
-  color: #a8d5a8;
+  color: var(--col-accent-muted);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .spacing-control input {
   width: 80px;
   padding: 8px 12px;
-  border: 2px solid rgba(46, 125, 50, 0.5);
+  border: 2px solid rgba(var(--col-btn-rgb), 0.5);
   border-radius: 6px;
   font-size: 1rem;
   transition: border-color 0.3s;
-  background: rgba(13, 31, 13, 0.6);
+  background: rgba(var(--col-surface-dark-rgb), 0.6);
   color: #e8f5e9;
 }
 
 .spacing-control input:focus {
   outline: none;
-  border-color: #4caf50;
-  box-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
+  border-color: var(--col-btn-hover);
+  box-shadow: 0 0 8px rgba(var(--col-btn-rgb), 0.4);
 }
 
 .input-and-buttons-container {

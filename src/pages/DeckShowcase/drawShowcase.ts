@@ -517,6 +517,7 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
     const cardLayouts: {
       dx: number;
       dy: number;
+      extraDy?: number;
       w: number;
       h: number;
       rot: number;
@@ -542,9 +543,9 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
         const md = Math.round(baseW * 0.86);
         const mdH = Math.round(md * cmdAspect);
         return [
-          { dx: 0, dy: 80, w: md, h: mdH, rot: 0, z: 2 },
-          { dx: -220, dy: -60, w: md, h: mdH, rot: -0.08, z: 0 },
-          { dx: 220, dy: -60, w: md, h: mdH, rot: 0.08, z: 1 },
+          { dx: 0, dy: 80, extraDy: 20, w: md, h: mdH, rot: 0, z: 2 },
+          { dx: -290, dy: -60, w: md, h: mdH, rot: -0.08, z: 0 },
+          { dx: 290, dy: -60, w: md, h: mdH, rot: 0.08, z: 1 },
         ];
       }
       return [
@@ -565,9 +566,9 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
 
     const CARD_PEEK_RATIO = 65 / 700;
     for (const i of cardDrawOrder) {
-      const { dx, dy, w: cw, h: ch, rot } = cardLayouts[i];
+      const { dx, dy, extraDy = 0, w: cw, h: ch, rot } = cardLayouts[i];
       const slotCX = cmdCenterX + dx;
-      const slotCY = cmdCenterY + dy;
+      const slotCY = cmdCenterY + dy + extraDy;
       const mainImg = allImgs[i] ?? null;
       const mainLoading = allImgLoadingStates[i] ?? false;
       const bgImg = state.backgroundImgs[i] ?? null;
@@ -1197,7 +1198,7 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
             descAreaTop +
             2 * descSize +
             (wrappedLines.length - 1) * (descSize + 10);
-          if (lastLineBottom <= keyCardsTop - 20) break;
+          if (lastLineBottom <= keyCardsTop + 8) break;
           descSize--;
         }
         let y = descAreaTop + descSize;
@@ -1228,8 +1229,7 @@ export function drawShowcase(canvas: HTMLCanvasElement, state: DrawState) {
         if (isHorizontal) {
           const labelCardGap = 26;
           keyH = Math.min((keyAreaH - labelSize - labelCardGap) * 0.98, 420);
-          const blockH = labelSize + labelCardGap + keyH;
-          const blockTop = keyCardsTop + (keyAreaH - blockH) / 2;
+          const blockTop = keyCardsTop;
           labelY = blockTop + labelSize;
           cardY = labelY + labelCardGap;
         } else {

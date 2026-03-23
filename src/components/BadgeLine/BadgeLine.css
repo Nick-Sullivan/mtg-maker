@@ -16,10 +16,10 @@
 }
 
 .badge-line.added {
-  background: rgba(76, 175, 80, 0.35);
-  color: #7dff7d;
-  border: 1px solid #4caf50;
-  box-shadow: 0 0 4px rgba(76, 175, 80, 0.3);
+  background: rgba(var(--col-btn-rgb), 0.35);
+  color: var(--col-accent);
+  border: 1px solid var(--col-btn-hover);
+  box-shadow: 0 0 4px rgba(var(--col-btn-rgb), 0.3);
   text-transform: lowercase;
 }
 
