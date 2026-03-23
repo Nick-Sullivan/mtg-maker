@@ -48,18 +48,21 @@ resource "aws_s3_object" "static_files" {
 }
 
 locals {
-  old_path_redirects = {
-    "index.html"         = "/mtg-maker/"
-    "proxy-maker.html"   = "/mtg-maker/#/proxy-maker"
-    "compare-decks.html" = "/mtg-maker/#/compare-decks"
-    "deck-showcase.html" = "/mtg-maker/#/deck-showcase"
+  path_redirects = {
+    "mtg-maker-ts/index.html"         = "/mtg-maker/index.html"
+    "mtg-maker-ts/proxy-maker.html"   = "/mtg-maker/index.html#/proxy-maker"
+    "mtg-maker-ts/compare-decks.html" = "/mtg-maker/index.html#/compare-decks"
+    "mtg-maker-ts/deck-showcase.html" = "/mtg-maker/index.html#/deck-showcase"
+    "mtg-maker/proxy-maker.html"      = "/mtg-maker/index.html#/proxy-maker"
+    "mtg-maker/compare-decks.html"    = "/mtg-maker/index.html#/compare-decks"
+    "mtg-maker/deck-showcase.html"    = "/mtg-maker/index.html#/deck-showcase"
   }
 }
 
 resource "aws_s3_object" "redirect_old_path" {
-  for_each     = local.old_path_redirects
+  for_each     = local.path_redirects
   bucket       = local.s3_bucket
-  key          = "mtg-maker-ts/${each.key}"
+  key          = each.key
   content_type = "text/html"
   content      = <<-HTML
     <!DOCTYPE html>
