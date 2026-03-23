@@ -50,9 +50,9 @@ resource "aws_s3_object" "static_files" {
 locals {
   old_path_redirects = {
     "index.html"         = "/mtg-maker/"
-    "proxy-maker.html"   = "/mtg-maker/proxy-maker.html"
-    "compare-decks.html" = "/mtg-maker/compare-decks.html"
-    "deck-showcase.html" = "/mtg-maker/deck-showcase.html"
+    "proxy-maker.html"   = "/mtg-maker/#/proxy-maker"
+    "compare-decks.html" = "/mtg-maker/#/compare-decks"
+    "deck-showcase.html" = "/mtg-maker/#/deck-showcase"
   }
 }
 
