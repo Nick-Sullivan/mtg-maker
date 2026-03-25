@@ -5,7 +5,11 @@ import {
   ScryfallSearchResponse,
 } from "../../types";
 import { sleep } from "../sleep";
-import { CORS_PROXY_URL, DELAY_BETWEEN_REQUESTS, SCRYFALL_API_BASE } from "./constants";
+import {
+  CORS_PROXY_URL,
+  DELAY_BETWEEN_REQUESTS,
+  SCRYFALL_API_BASE,
+} from "./constants";
 
 export function proxyScryfallUrl(url: string): string {
   if (!url.includes("scryfall.io")) return url;

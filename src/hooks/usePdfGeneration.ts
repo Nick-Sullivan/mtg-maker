@@ -6,7 +6,7 @@ export function usePdfGeneration(
   currentDeck: DeckWithMetadata | null,
   setStatus: React.Dispatch<
     React.SetStateAction<{ message: string; type: StatusType }>
-  >
+  >,
 ) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [showPdfSettings, setShowPdfSettings] = useState(false);

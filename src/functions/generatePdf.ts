@@ -19,7 +19,6 @@ const CARDS_PER_ROW = 3;
 const CARDS_PER_COL = 3;
 const CARDS_PER_PAGE = CARDS_PER_ROW * CARDS_PER_COL;
 
-
 // Cache for base64 images
 const imageCache = new Map<string, string>();
 

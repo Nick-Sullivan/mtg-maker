@@ -1,18 +1,18 @@
 import { SCRYFALL_API_BASE } from "./constants";
 
 export const fetchSimilarCardNames = async (
-  cardName: string
+  cardName: string,
 ): Promise<string[]> => {
   try {
     const response = await fetch(
       `${SCRYFALL_API_BASE}/cards/search?q=${encodeURIComponent(
-        cardName
-      )}&unique=cards&order=edhrec`
+        cardName,
+      )}&unique=cards&order=edhrec`,
     );
 
     if (!response.ok) {
       console.error(
-        `Failed to fetch suggestions for ${cardName}: ${response.status}`
+        `Failed to fetch suggestions for ${cardName}: ${response.status}`,
       );
       return [];
     }

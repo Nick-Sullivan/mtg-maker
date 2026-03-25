@@ -9,7 +9,12 @@ import {
 import { CardWithMetadata } from "../../types";
 import { CardInputRow } from "./CardInputRow";
 import "./DeckShowcase.css";
-import { CANVAS_SIZE, DrawState, drawShowcase, getCanvasDimensions } from "./drawShowcase";
+import {
+  CANVAS_SIZE,
+  DrawState,
+  drawShowcase,
+  getCanvasDimensions,
+} from "./drawShowcase";
 import { loadImage } from "./imageLoader";
 
 interface ShowcaseCard extends CardWithMetadata {
@@ -80,7 +85,7 @@ function useDebounce<T>(value: T, delay: number): T {
   return d;
 }
 
-type Shape = 'square' | 'vertical' | 'horizontal';
+type Shape = "square" | "vertical" | "horizontal";
 const PREVIEW_SIZE = CANVAS_SIZE / 2;
 
 export function DeckShowcase() {
@@ -112,7 +117,7 @@ export function DeckShowcase() {
     string[] | null
   >(null);
   const [showColorIcons, setShowColorIcons] = useState(true);
-  const [shape, setShape] = useState<Shape>('horizontal');
+  const [shape, setShape] = useState<Shape>("horizontal");
 
   const [colorIconImgs, setColorIconImgs] = useState<
     Partial<Record<string, HTMLImageElement>>
@@ -313,7 +318,10 @@ export function DeckShowcase() {
       colorIdentity: manualColorIdentity ?? commanders[0]?.colorIdentity ?? [],
       colorIcons: colorIconImgs,
       showColorIcons,
-      tags: tagsInput.split(",").map((t) => t.trim()).filter(Boolean),
+      tags: tagsInput
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
       qrImg,
       shape,
     };
@@ -638,21 +646,27 @@ export function DeckShowcase() {
             ref={canvasRef}
             width={getCanvasDimensions(shape, PREVIEW_SIZE).width}
             height={getCanvasDimensions(shape, PREVIEW_SIZE).height}
-            className={`showcase-canvas${shape === 'vertical' ? ' showcase-canvas--vertical' : ''}`}
+            className={`showcase-canvas${shape === "vertical" ? " showcase-canvas--vertical" : ""}`}
           />
           <div className="showcase-shape-toggle">
             <button
-              className={`shape-btn ${shape === 'horizontal' ? 'active' : ''}`}
-              onClick={() => setShape('horizontal')}
-            >Horizontal</button>
+              className={`shape-btn ${shape === "horizontal" ? "active" : ""}`}
+              onClick={() => setShape("horizontal")}
+            >
+              Horizontal
+            </button>
             <button
-              className={`shape-btn ${shape === 'vertical' ? 'active' : ''}`}
-              onClick={() => setShape('vertical')}
-            >Vertical</button>
+              className={`shape-btn ${shape === "vertical" ? "active" : ""}`}
+              onClick={() => setShape("vertical")}
+            >
+              Vertical
+            </button>
             <button
-              className={`shape-btn ${shape === 'square' ? 'active' : ''}`}
-              onClick={() => setShape('square')}
-            >Square</button>
+              className={`shape-btn ${shape === "square" ? "active" : ""}`}
+              onClick={() => setShape("square")}
+            >
+              Square
+            </button>
           </div>
           <div className="showcase-preview-actions">
             <button className="showcase-download-btn" onClick={handleDownload}>
@@ -891,18 +905,46 @@ export function DeckShowcase() {
                   <div className="tags-help-popover">
                     <p className="tags-help-heading">Common tags</p>
                     <ul>
-                      <li><span>aggro</span> — fast, board-wide pressure</li>
-                      <li><span>aristocrats</span> — sacrifice and death triggers</li>
-                      <li><span>combo</span> — wins through infinite/game-ending combos</li>
-                      <li><span>control</span> — counters, removal, and card advantage</li>
-                      <li><span>group hug</span> — benefits all players</li>
-                      <li><span>midrange</span> — value and flexibility over speed</li>
-                      <li><span>pillowfort</span> — defensive deterrents</li>
-                      <li><span>reanimator</span> — recurs creatures from graveyards</li>
-                      <li><span>stax</span> — slows opponents via resource denial</li>
-                      <li><span>tokens</span> — goes wide with token generation</li>
-                      <li><span>tribal</span> — creature-type synergies</li>
-                      <li><span>voltron</span> — stacks one creature for commander damage</li>
+                      <li>
+                        <span>aggro</span> — fast, board-wide pressure
+                      </li>
+                      <li>
+                        <span>aristocrats</span> — sacrifice and death triggers
+                      </li>
+                      <li>
+                        <span>combo</span> — wins through infinite/game-ending
+                        combos
+                      </li>
+                      <li>
+                        <span>control</span> — counters, removal, and card
+                        advantage
+                      </li>
+                      <li>
+                        <span>group hug</span> — benefits all players
+                      </li>
+                      <li>
+                        <span>midrange</span> — value and flexibility over speed
+                      </li>
+                      <li>
+                        <span>pillowfort</span> — defensive deterrents
+                      </li>
+                      <li>
+                        <span>reanimator</span> — recurs creatures from
+                        graveyards
+                      </li>
+                      <li>
+                        <span>stax</span> — slows opponents via resource denial
+                      </li>
+                      <li>
+                        <span>tokens</span> — goes wide with token generation
+                      </li>
+                      <li>
+                        <span>tribal</span> — creature-type synergies
+                      </li>
+                      <li>
+                        <span>voltron</span> — stacks one creature for commander
+                        damage
+                      </li>
                     </ul>
                   </div>
                 )}

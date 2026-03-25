@@ -4,10 +4,10 @@ import { DeckWithMetadata } from "../types";
 
 export function useCardSelection(
   currentDeck: DeckWithMetadata | null,
-  setCurrentDeck: React.Dispatch<React.SetStateAction<DeckWithMetadata | null>>
+  setCurrentDeck: React.Dispatch<React.SetStateAction<DeckWithMetadata | null>>,
 ) {
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(
-    null
+    null,
   );
 
   const handleCardClick = (cardIndex: number) => {

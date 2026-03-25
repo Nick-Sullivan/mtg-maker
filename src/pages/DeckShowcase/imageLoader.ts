@@ -14,7 +14,10 @@ export async function loadImage(url: string): Promise<HTMLImageElement> {
 
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => { cache.set(url, img); resolve(img); };
+    img.onload = () => {
+      cache.set(url, img);
+      resolve(img);
+    };
     img.onerror = reject;
     img.src = src;
   });

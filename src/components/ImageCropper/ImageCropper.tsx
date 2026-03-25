@@ -49,17 +49,7 @@ export function ImageCropper({ imageUrl, onCropComplete, onCancel }: Params) {
       cropCanvas.width = outW;
       cropCanvas.height = outH;
 
-      ctx.drawImage(
-        img,
-        cropX,
-        cropY,
-        cropWidth,
-        cropHeight,
-        0,
-        0,
-        outW,
-        outH
-      );
+      ctx.drawImage(img, cropX, cropY, cropWidth, cropHeight, 0, 0, outW, outH);
 
       const croppedImageUrl = cropCanvas.toDataURL("image/jpeg", 0.88);
       setIsProcessing(false);

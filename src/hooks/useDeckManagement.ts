@@ -36,7 +36,7 @@ export function useDeckManagement() {
   };
 
   const buildInitialCards = (
-    preservedCards: Map<string, CardWithMetadata>
+    preservedCards: Map<string, CardWithMetadata>,
   ): CardWithMetadata[] => {
     return deck.cards.map((card) => {
       const preserved = preservedCards.get(card.name.toLowerCase());

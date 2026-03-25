@@ -32,19 +32,31 @@ export function BurgerMenu() {
         </div>
         <ul className="burger-menu-links">
           <li>
-            <NavLink to="/proxy-maker" className={({ isActive }) => isActive ? "active" : ""} onClick={closeMenu}>
+            <NavLink
+              to="/proxy-maker"
+              className={({ isActive }) => (isActive ? "active" : "")}
+              onClick={closeMenu}
+            >
               <Printer className="menu-icon" size={20} />
               Proxy Maker
             </NavLink>
           </li>
           <li>
-            <NavLink to="/compare-decks" className={({ isActive }) => isActive ? "active" : ""} onClick={closeMenu}>
+            <NavLink
+              to="/compare-decks"
+              className={({ isActive }) => (isActive ? "active" : "")}
+              onClick={closeMenu}
+            >
               <GitCompare className="menu-icon" size={20} />
               Compare Decks
             </NavLink>
           </li>
           <li>
-            <NavLink to="/deck-showcase" className={({ isActive }) => isActive ? "active" : ""} onClick={closeMenu}>
+            <NavLink
+              to="/deck-showcase"
+              className={({ isActive }) => (isActive ? "active" : "")}
+              onClick={closeMenu}
+            >
               <Image className="menu-icon" size={20} />
               Deck Showcase
             </NavLink>

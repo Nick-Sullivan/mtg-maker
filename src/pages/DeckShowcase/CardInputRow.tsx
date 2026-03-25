@@ -17,7 +17,15 @@ interface Props {
   placeholder?: string;
 }
 
-export function CardInputRow({ name, card, onNameChange, onArtClick, onErrorClick, onRemove, placeholder }: Props) {
+export function CardInputRow({
+  name,
+  card,
+  onNameChange,
+  onArtClick,
+  onErrorClick,
+  onRemove,
+  placeholder,
+}: Props) {
   const hasImage = card && card.imageUrls.length > 0;
 
   return (
@@ -51,7 +59,9 @@ export function CardInputRow({ name, card, onNameChange, onArtClick, onErrorClic
         className="showcase-input card-input-name"
       />
       {onRemove && (
-        <button className="card-input-remove" onClick={onRemove} title="Remove">×</button>
+        <button className="card-input-remove" onClick={onRemove} title="Remove">
+          ×
+        </button>
       )}
     </div>
   );

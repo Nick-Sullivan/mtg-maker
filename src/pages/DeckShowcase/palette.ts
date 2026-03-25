@@ -27,9 +27,24 @@ const GUILD: Record<string, Palette> = {
   GU: { dark: "#040e10", mid: "#0a2020", accent: "#30a880", glow: "#80ffe0" }, // Simic
 };
 
-const COLORLESS: Palette = { dark: "#131313", mid: "#2c2c2c", accent: "#8a8a8a", glow: "#e0e0e0" };
-const MULTI: Palette    = { dark: "#1a1308", mid: "#3d2c08", accent: "#c8a435", glow: "#ffe88a" };
-const FIVE: Palette     = { dark: "#120e04", mid: "#3a2c06", accent: "#e0b840", glow: "#fff0a0" };
+const COLORLESS: Palette = {
+  dark: "#131313",
+  mid: "#2c2c2c",
+  accent: "#8a8a8a",
+  glow: "#e0e0e0",
+};
+const MULTI: Palette = {
+  dark: "#1a1308",
+  mid: "#3d2c08",
+  accent: "#c8a435",
+  glow: "#ffe88a",
+};
+const FIVE: Palette = {
+  dark: "#120e04",
+  mid: "#3a2c06",
+  accent: "#e0b840",
+  glow: "#fff0a0",
+};
 
 export function getBasePalette(color: string): Palette | null {
   return BASE[color] ?? null;
@@ -42,7 +57,9 @@ export function getPalette(colorIdentity: string[]): Palette {
   if (colorIdentity.length === 1) return BASE[colorIdentity[0]] ?? COLORLESS;
 
   // 2-color: look up guild palette by sorted key
-  const key = [...colorIdentity].sort((a, b) => "WUBRG".indexOf(a) - "WUBRG".indexOf(b)).join("");
+  const key = [...colorIdentity]
+    .sort((a, b) => "WUBRG".indexOf(a) - "WUBRG".indexOf(b))
+    .join("");
   return GUILD[key] ?? MULTI;
 }
 
