@@ -588,10 +588,12 @@ select.showcase-input option {
   to { transform: rotate(360deg); }
 }
 
-.spinner {
-  display: inline-block;
+.card-input-thumb-placeholder .spinner {
+  display: block;
   width: 14px;
   height: 14px;
+  flex-shrink: 0;
+  align-self: center;
   border: 2px solid rgba(255, 255, 255, 0.2);
   border-top-color: rgba(255, 255, 255, 0.7);
   border-radius: 50%;
