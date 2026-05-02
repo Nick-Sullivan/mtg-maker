@@ -11,4 +11,4 @@
 [tools]
 awscli = "2.31.0"
 node = "23.8.0"
-terraform = "1.12"
+terraform = "1.15.1"

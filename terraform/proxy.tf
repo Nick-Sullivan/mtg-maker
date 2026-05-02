@@ -30,12 +30,13 @@ resource "aws_lambda_function" "cors_proxy" {
   role             = aws_iam_role.lambda_cors_proxy.arn
   handler          = "index.handler"
   source_code_hash = data.archive_file.lambda_cors_proxy.output_base64sha256
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs24.x"
   timeout          = 30
   memory_size      = 256
   tags             = local.tags
 }
 
+// If the URL ever changes, update its usage in the frontend.
 resource "aws_lambda_function_url" "cors_proxy" {
   function_name      = aws_lambda_function.cors_proxy.function_name
   authorization_type = "NONE"
@@ -54,7 +55,7 @@ resource "aws_lambda_function_url" "cors_proxy" {
 
 resource "aws_cloudwatch_log_group" "cors_proxy" {
   name              = "/aws/lambda/mtg-maker-cors-proxy"
-  retention_in_days = 90
+  retention_in_days = 30
   tags              = local.tags
 }
 
