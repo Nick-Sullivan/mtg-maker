@@ -17,12 +17,21 @@ export const handler = async (event) => {
   }
 
   try {
-    const response = await fetch(targetUrl);
+    const response = await fetch(targetUrl, {
+      headers: { "User-Agent": "mtg-maker/1.0" },
+    });
 
     if (!response.ok) {
-      throw new Error(
-        `Failed to fetch: ${response.status} ${response.statusText}`,
+      console.error(
+        `Upstream error fetching ${targetUrl}: ${response.status} ${response.statusText}`,
       );
+      return {
+        statusCode: response.status,
+        body: JSON.stringify({
+          error: `Upstream returned ${response.status}`,
+          url: targetUrl,
+        }),
+      };
     }
 
     const arrayBuffer = await response.arrayBuffer();
@@ -38,7 +47,7 @@ export const handler = async (event) => {
       isBase64Encoded: true,
     };
   } catch (error) {
-    console.error("Lambda error:", error);
+    console.error(`Lambda error fetching ${targetUrl}:`, error);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: error.message }),
