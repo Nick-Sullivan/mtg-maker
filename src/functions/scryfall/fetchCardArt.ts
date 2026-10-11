@@ -36,12 +36,25 @@ export const fetchAllCardMetadata = async ({
       // Try to find the requested printing
       let selectedIndex = 0;
       if (card.requestedSet) {
-        const requestedIndex = allPrintings.findIndex(
-          (printing) =>
-            printing.set.toLowerCase() === card.requestedSet!.toLowerCase() &&
-            (!card.requestedCollectorNumber ||
-              printing.collector_number === card.requestedCollectorNumber),
-        );
+        let requestedIndex = findPrintingIndex(allPrintings, card);
+        if (requestedIndex === -1) {
+          // Scryfall only returns the first page of printings, so a card with
+          // many printings (basic lands especially) can be missing the one that
+          // was asked for. Look that printing up directly instead.
+          await sleep(DELAY_BETWEEN_REQUESTS);
+          const exactPrinting = await fetchPrintingBySetAndNumber(
+            card.name,
+            card.requestedSet,
+            card.requestedCollectorNumber,
+          );
+          if (
+            exactPrinting &&
+            exactPrinting.name.toLowerCase().startsWith(card.name.toLowerCase())
+          ) {
+            allPrintings.unshift(exactPrinting);
+            requestedIndex = 0;
+          }
+        }
         if (requestedIndex !== -1) {
           selectedIndex = requestedIndex;
         }
@@ -85,6 +98,45 @@ export const fetchAllCardMetadata = async ({
   }
 
   return cardsWithMetadata;
+};
+
+const findPrintingIndex = (printings: ScryfallCard[], card: Card): number =>
+  printings.findIndex(
+    (printing) =>
+      printing.set.toLowerCase() === card.requestedSet!.toLowerCase() &&
+      (!card.requestedCollectorNumber ||
+        printing.collector_number === card.requestedCollectorNumber),
+  );
+
+export const fetchPrintingBySetAndNumber = async (
+  cardName: string,
+  set: string,
+  collectorNumber?: string,
+): Promise<ScryfallCard | null> => {
+  const url = collectorNumber
+    ? `${SCRYFALL_API_BASE}/cards/${encodeURIComponent(
+        set.toLowerCase(),
+      )}/${encodeURIComponent(collectorNumber)}`
+    : `${SCRYFALL_API_BASE}/cards/search?q=${encodeURIComponent(
+        `!"${cardName}" set:${set} include:extras`,
+      )}&unique=prints&order=released`;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      return null;
+    }
+    const data = await response.json();
+    if (collectorNumber) {
+      return data as ScryfallCard;
+    }
+    return (data as ScryfallSearchResponse).data?.[0] || null;
+  } catch (error) {
+    console.error(
+      `Error fetching ${cardName} (${set}) ${collectorNumber}`,
+      error,
+    );
+    return null;
+  }
 };
 
 export const fetchOnePrinting = async (
